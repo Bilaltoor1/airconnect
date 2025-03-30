@@ -1,0 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.green-bg{
+    @apply bg-gradient-to-l from-green-400 to-emerald-600  disabled:cursor-not-allowed;
+}
