@@ -13,6 +13,7 @@ const HomePage = () => {
     const [searchParams, setSearchParams] = useSearchParams();
     const { data: sectionsData, isLoading: sectionsLoading } = useAnnouncementsFilter();
     const { data: batchesData, isLoading: batchesLoading } = useBatchFilter();
+    const [filteredBatches, setFilteredBatches] = useState([]);
     const navigate = useNavigate();
     
     // Get query parameters with defaults
@@ -57,12 +58,25 @@ const HomePage = () => {
     };
 
     const handleSectionChange = (e) => {
-        setSearchParams(prev => {
-            const newParams = new URLSearchParams(prev);
-            newParams.set('section', e.target.value);
-            newParams.set('page', '1');
-            return newParams;
-        });
+        const newSection = e.target.value;
+        
+        // If coordinator is changing section, also clear the batch selection
+        if (user.role === 'coordinator') {
+            setSearchParams(prev => {
+                const newParams = new URLSearchParams(prev);
+                newParams.set('section', newSection);
+                newParams.set('batch', '');
+                newParams.set('page', '1');
+                return newParams;
+            });
+        } else {
+            setSearchParams(prev => {
+                const newParams = new URLSearchParams(prev);
+                newParams.set('section', newSection);
+                newParams.set('page', '1');
+                return newParams;
+            });
+        }
     };
 
     const handleRoleChange = (e) => {
@@ -90,6 +104,32 @@ const HomePage = () => {
             return newParams;
         });
     };
+
+    // Filter batches based on selected section for coordinators
+    useEffect(() => {
+        if (!batchesLoading && batchesData && batchesData.length > 0) {
+            if (user.role === 'coordinator' && section && section !== 'all') {
+                // Filter batches that start with the selected section
+                const sectionPrefix = section.toLowerCase().split(' ')[0]; // Get first word of section
+                const filtered = batchesData.filter(batch => 
+                    batch.name.toLowerCase().includes(sectionPrefix)
+                );
+                setFilteredBatches(filtered);
+                
+                // If current selected batch doesn't match the section, clear it
+                if (batch && !filtered.some(b => b.name === batch)) {
+                    setSearchParams(prev => {
+                        const newParams = new URLSearchParams(prev);
+                        newParams.set('batch', '');
+                        return newParams;
+                    });
+                }
+            } else {
+                // If no section filter or not coordinator, show all batches
+                setFilteredBatches(batchesData);
+            }
+        }
+    }, [section, batchesData, batchesLoading, user.role]);
 
     return (
         <div className="container px-4 py-8 mx-auto max-w-5xl">
@@ -127,29 +167,31 @@ const HomePage = () => {
                             </select>
                         </div>
                         
-                        <div className="flex items-center">
-                            <label className="mr-2 text-sm font-medium whitespace-nowrap">Section:</label>
-                            <select
-                                className="select select-bordered select-sm md:select-md"
-                                value={section}
-                                onChange={handleSectionChange}
-                                disabled={user.role === 'student'} // Students can't change section filter
-                            >
-                                <option value="all">All</option>
-                                {sectionsLoading ? (
-                                    <option>Loading...</option>
-                                ) : (
-                                    sectionsData.map((section) => (
-                                        <option key={section._id} value={section.section}>
-                                            {section.section}
-                                        </option>
-                                    ))
-                                )}
-                            </select>
-                        </div>
+                        {/* Section Filter - Only visible to coordinators, teachers, and student affairs */}
+                        {(user.role === 'coordinator' || user.role === 'teacher' || user.role === 'student-affairs') && (
+                            <div className="flex items-center">
+                                <label className="mr-2 text-sm font-medium whitespace-nowrap">Section:</label>
+                                <select
+                                    className="select select-bordered select-sm md:select-md"
+                                    value={section}
+                                    onChange={handleSectionChange}
+                                >
+                                    <option value="all">All</option>
+                                    {sectionsLoading ? (
+                                        <option>Loading...</option>
+                                    ) : (
+                                        sectionsData.map((section) => (
+                                            <option key={section._id} value={section.section}>
+                                                {section.section}
+                                            </option>
+                                        ))
+                                    )}
+                                </select>
+                            </div>
+                        )}
 
-                        {/* Modified Role Filter - remove student option */}
-                        {user.role !== 'student' && (
+                        {/* Role Filter - Only visible to students */}
+                        {user.role === 'student' && (
                             <div className="flex items-center">
                                 <label className="mr-2 text-sm font-medium whitespace-nowrap">Role:</label>
                                 <select
@@ -160,31 +202,32 @@ const HomePage = () => {
                                     <option value="all">All</option>
                                     <option value="teacher">Teacher</option>
                                     <option value="coordinator">Coordinator</option>
-                                    {/* Student role removed since students cannot create announcements */}
                                 </select>
                             </div>
                         )}
                         
-                        {/* Add Batch Filter */}
-                        <div className="flex items-center">
-                            <label className="mr-2 text-sm font-medium whitespace-nowrap">Batch:</label>
-                            <select
-                                className="select select-bordered select-sm md:select-md"
-                                value={batch}
-                                onChange={handleBatchChange}
-                            >
-                                <option value="">All Batches</option>
-                                {batchesLoading ? (
-                                    <option>Loading...</option>
-                                ) : (
-                                    batchesData?.map((batch) => (
-                                        <option key={batch._id} value={batch.name}>
-                                            {batch.name}
-                                        </option>
-                                    ))
-                                )}
-                            </select>
-                        </div>
+                        {/* Batch Filter - Only visible to coordinators, teachers, and student affairs */}
+                        {(user.role === 'coordinator' || user.role === 'teacher' || user.role === 'student-affairs') && (
+                            <div className="flex items-center">
+                                <label className="mr-2 text-sm font-medium whitespace-nowrap">Batch:</label>
+                                <select
+                                    className="select select-bordered select-sm md:select-md"
+                                    value={batch}
+                                    onChange={handleBatchChange}
+                                >
+                                    <option value="">All Batches</option>
+                                    {batchesLoading ? (
+                                        <option>Loading...</option>
+                                    ) : (
+                                        filteredBatches?.map((batch) => (
+                                            <option key={batch._id} value={batch.name}>
+                                                {batch.name}
+                                            </option>
+                                        ))
+                                    )}
+                                </select>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

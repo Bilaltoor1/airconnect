@@ -80,7 +80,8 @@ const AnnouncementFilter = ({ filters, setFilters }) => {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                        {user.role === 'coordinator' && (
+                        {/* Section filter - Only visible to coordinators, teachers, and student affairs */}
+                        {(user.role === 'coordinator' || user.role === 'teacher' || user.role === 'student-affairs') && (
                             <div className="form-control">
                                 <label className="label">
                                     <span className="label-text">Section</span>
@@ -101,7 +102,8 @@ const AnnouncementFilter = ({ filters, setFilters }) => {
                             </div>
                         )}
 
-                        {user.role === 'coordinator' && (
+                        {/* Role filter - Only visible to students */}
+                        {user.role === 'student' && (
                             <div className="form-control">
                                 <label className="label">
                                     <span className="label-text">Posted By</span>
@@ -119,29 +121,12 @@ const AnnouncementFilter = ({ filters, setFilters }) => {
                             </div>
                         )}
 
-                        <div className="form-control">
-                            <label className="label">
-                                <span className="label-text">Batch</span>
-                            </label>
-                            {user.role === 'student' ? (
-                                <div className="flex flex-wrap gap-2">
-                                    {!batchesLoading && batches?.map((batch) => (
-                                        <button
-                                            key={batch._id}
-                                            className={`badge badge-lg ${selectedBatch === batch.name 
-                                                ? 'bg-primary text-primary-content' 
-                                                : 'bg-base-300'}`}
-                                            onClick={() => {
-                                                const newBatchValue = selectedBatch === batch.name ? '' : batch.name;
-                                                setFilters({...filters, batch: newBatchValue});
-                                                setSelectedBatch(newBatchValue);
-                                            }}
-                                        >
-                                            {batch.name}
-                                        </button>
-                                    ))}
-                                </div>
-                            ) : (
+                        {/* Batch filter - Only visible to coordinators, teachers, and student affairs */}
+                        {(user.role === 'coordinator' || user.role === 'teacher' || user.role === 'student-affairs') && (
+                            <div className="form-control">
+                                <label className="label">
+                                    <span className="label-text">Batch</span>
+                                </label>
                                 <select
                                     className="select select-bordered w-full"
                                     value={filters.batch}
@@ -155,8 +140,8 @@ const AnnouncementFilter = ({ filters, setFilters }) => {
                                         </option>
                                     ))}
                                 </select>
-                            )}
-                        </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}

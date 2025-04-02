@@ -31,14 +31,15 @@ const studentColumns = (handleAddStudent, selectedBatchId) => [
             <button 
                 onClick={() => handleAddStudent(row.original._id)} 
                 disabled={!selectedBatchId}
-                className={`flex items-center gap-1.5 ${
+                className={`flex items-center gap-1 ${
                     !selectedBatchId 
                     ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
                     : 'bg-purple-50 text-purple-700 hover:bg-purple-100'
-                } px-3 py-1.5 rounded-full border transition-colors`}
+                } px-2 sm:px-3 py-1.5 rounded-full border transition-colors`}
             >
                 <UserPlus size={14} />
-                <span className="text-xs font-medium">Add to Batch</span>
+                <span className="text-xs font-medium hidden sm:inline">Add to Batch</span>
+                <span className="text-xs font-medium sm:hidden">Add</span>
             </button>
         ),
     },
@@ -85,7 +86,7 @@ const DataTable = ({ columns, data, filterValue, setFilterValue }) => {
                                     {headerGroup.headers.map(header => (
                                         <th 
                                             key={header.id} 
-                                            className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
+                                            className="px-3 sm:px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
                                         >
                                             {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
                                         </th>
@@ -98,7 +99,7 @@ const DataTable = ({ columns, data, filterValue, setFilterValue }) => {
                                 filteredData.map((row, i) => (
                                     <tr key={row._id || i} className="hover:bg-gray-50 transition-colors">
                                         {columns.map((column, columnIndex) => (
-                                            <td key={columnIndex} className="px-6 py-4 text-sm text-gray-700">
+                                            <td key={columnIndex} className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-700 truncate max-w-[150px] sm:max-w-none">
                                                 {column.accessorKey ? row[column.accessorKey] : flexRender(column.cell, { row: { original: row } })}
                                             </td>
                                         ))}
@@ -164,8 +165,8 @@ const AddStudentPage = () => {
     );
 
     return (
-        <div className="p-6 max-w-6xl mx-auto">
-            <div className="mb-8">
+        <div className="p-3 sm:p-6 max-w-6xl mx-auto">
+            <div className="mb-6 sm:mb-8">
                 <Link 
                     to="/batches" 
                     className="flex items-center gap-1 text-gray-600 hover:text-gray-900 mb-2"
@@ -173,18 +174,18 @@ const AddStudentPage = () => {
                     <ArrowLeft size={16} />
                     <span>Back to Batches</span>
                 </Link>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-purple-600 text-transparent bg-clip-text">
+                <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-purple-400 to-purple-600 text-transparent bg-clip-text">
                     Add Students to Batch
                 </h1>
             </div>
 
-            <div className="bg-base-100 rounded-2xl shadow-xl p-6 mb-8">
-                <h2 className="text-xl font-semibold mb-4">Select Batch</h2>
+            <div className="bg-base-100 rounded-2xl shadow-xl p-4 sm:p-6 mb-6 sm:mb-8">
+                <h2 className="text-lg sm:text-xl font-semibold mb-4">Select Batch</h2>
                 <div className="relative">
                     <select
                         value={selectedBatchId}
                         onChange={(e) => setSelectedBatchId(e.target.value)}
-                        className="w-full py-3 bg-base-100 rounded-lg border border-gray-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 px-3 pr-8 appearance-none"
+                        className="w-full py-2 sm:py-3 bg-base-100 rounded-lg border border-gray-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 px-3 pr-8 appearance-none"
                     >
                         <option value="">Select a batch</option>
                         {batches.map(batch => (
@@ -203,8 +204,8 @@ const AddStudentPage = () => {
                 )}
             </div>
 
-            <div className="bg-base-100 rounded-2xl shadow-xl p-6">
-                <h2 className="text-xl font-semibold mb-4">Available Students</h2>
+            <div className="bg-base-100 rounded-2xl shadow-xl p-4 sm:p-6">
+                <h2 className="text-lg sm:text-xl font-semibold mb-4">Available Students</h2>
                 <DataTable
                     columns={studentColumns(handleAddStudent, selectedBatchId)}
                     data={students}
