@@ -126,12 +126,25 @@ const getUser = async (req, res) => {
 const updateProfileSetup = async (req, res) => {
     try {
         console.log('Profile setup request received:', req.body);
-        console.log('File:', req.file); // Log the received file
+        console.log('File:', req.file);
 
         const userId = req.user._id;
         const profileData = req.body;
+        console.log('Profile data:', profileData);
+        
+        // Find the user first to determine the role
+        const user = await UserModel.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
 
-        // Check if file was uploaded
+        // Prepare update data based on user role
+        const updateData = {
+            profileSetup: true,
+            identityConfirmed: true
+        };
+
+        // Handle profile image upload
         if (req.file) {
             try {
                 // Upload to Cloudinary if a file was provided
@@ -139,35 +152,61 @@ const updateProfileSetup = async (req, res) => {
                     folder: 'user_profiles',
                 });
                 
-                // Add the image URL to profile data
-                profileData.profileImage = result.secure_url;
+                // Add the image URL to update data
+                updateData.profileImage = result.secure_url;
                 
                 // Remove local file after upload to cloudinary
                 fs.unlinkSync(req.file.path);
             } catch (uploadError) {
                 console.error('Error uploading to Cloudinary:', uploadError);
-                return res.status(500).json({ message: 'Error uploading image' });
+                // Continue without failing the whole operation
             }
         }
 
-        // Update user profile
-        const updatedUser = await UserModel.findByIdAndUpdate(
-            userId,
-            { 
-                section: profileData.section,
-                rollNo: profileData.rollNo,
-                batch: profileData.batchId,
-                profileImage: profileData.profileImage,
-                identityConfirmed: true,
-                profileSetup: true,  // Add this line to set profileSetup to true
-                // Add more fields as needed
-            },
-            { new: true }
-        );
+        // Add role-specific data directly to the user document
+        if (user.role === 'student') {
+            // Apply updates directly to user document
+            user.section = profileData.section;
+            user.rollNo = profileData.rollNo;
+            
+            // Handle batch assignment
+            if (profileData.batchId) {
+                const batch = await Batch.findById(profileData.batchId);
+                if (!batch) {
+                    return res.status(404).json({ message: 'Batch not found' });
+                }
+                
+                // Set batch reference directly on user document
+                user.batch = profileData.batchId;
+                
+                // Add student to batch if not already there
+                if (!batch.students.includes(userId)) {
+                    batch.students.push(userId);
+                    await batch.save();
+                }
+            }
+        } else if (user.role === 'teacher') {
+            user.section = profileData.section;
+        } else if (user.role === 'coordinator') {
+            user.department = profileData.department;
+            user.officeNumber = profileData.officeNumber;
+        }
+
+        // Apply other updates from updateData object
+        user.profileSetup = updateData.profileSetup;
+        user.identityConfirmed = updateData.identityConfirmed;
+        if (updateData.profileImage) {
+            user.profileImage = updateData.profileImage;
+        }
+
+        // Save the updated user document
+        await user.save();
+
+        console.log('Updated user:', user);
 
         res.status(200).json({ 
             message: 'Profile setup completed successfully',
-            user: updatedUser
+            user: user
         });
     } catch (error) {
         console.error('Error in profile setup:', error);
@@ -311,12 +350,10 @@ export const verifyTeacher = async (req, res) => {
             return res.status(400).json({ message: 'User is not a teacher' });
         }
 
-        // Update teacher verification status
         teacher.isVerified = true;
         teacher.isApproved = isApproved;
-        teacher.identityConfirmed = true; // Add this line to ensure verified teachers don't appear in pending list
+        teacher.identityConfirmed = true; 
         
-        // If rejected, we might want to provide a reason (could add this later)
         if (!isApproved) {
             teacher.verificationRejectedReason = req.body.reason || 'Not approved by coordinator';
         }

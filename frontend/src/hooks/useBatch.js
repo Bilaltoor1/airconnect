@@ -13,6 +13,7 @@ export const createBatch = async (batchData) => {
     const response = await axios.post(`${API_URL}/create`, batchData);
     return response.data;
 };
+
 export const fetchBatchDetails = async (batchId) => {
     const response = await axios.get(`${API_URL}/${batchId}`);
     return response.data;
@@ -21,13 +22,16 @@ export const fetchBatchDetails = async (batchId) => {
 export const useBatches = () => {
     return useQuery('batches', fetchBatches);
 };
+
 export const fetchBatchSummary = async () => {
     const response = await axios.get(`${API_URL}/summary`);
     return response.data;
 };
+
 export const useBatchDetails = (batchId) => {
     return useQuery(['batch', batchId], () => fetchBatchDetails(batchId));
 };
+
 export const updateBatch = async (batchId, batchData) => {
     const response = await axios.put(`${API_URL}/update/${batchId}`, batchData);
     return response.data;

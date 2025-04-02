@@ -130,9 +130,15 @@ export const getAllBatches = async (req, res) => {
     try {
         let batches;
         if (req.user.role === 'teacher') {
-            batches = await Batch.find({ teachers: req.user._id });
+            batches = await Batch.find({ teachers: req.user._id })
+                .populate('advisor', 'name email')
+                .populate('students')
+                .populate('teachers');
         } else {
-            batches = await Batch.find();
+            batches = await Batch.find()
+                .populate('advisor', 'name email')
+                .populate('students')
+                .populate('teachers');
         }
         res.status(200).json(batches);
     } catch (error) {
@@ -149,14 +155,18 @@ export const getBatchDetails = async (req, res) => {
             .populate({
                 path: 'students',
                 model: 'User',
-                // select: 'name email role'
+                select: 'name email role section rollNo'
             })
             .populate({
                 path: 'teachers',
                 model: 'User',
-                // select: 'name email role'
+                select: 'name email role section'
+            })
+            .populate({
+                path: 'advisor',
+                model: 'User',
+                select: 'name email'
             });
-
         if (!batch) {
             console.log('Batch not found');
             return res.status(404).json({ message: 'Batch not found' });

@@ -6,6 +6,7 @@ import { useAllAnnouncementsFilter } from "../../hooks/useAnnouncementFilter.js"
 import { z } from 'zod';
 import { useBatches } from "../../hooks/useBatch.js";
 import { Camera, Upload, X } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const teacherSchema = z.object({
     section: z.string().min(1, { message: "Section is required" }),
@@ -25,9 +26,9 @@ const coordinatorSchema = z.object({
 const ProfileSetup = () => {
     const { user } = useAuth();
     const { mutate: logout } = useLogout();
-    const { mutate: setupProfile } = useProfileSetup();
+    const { mutate: setupProfile, isLoading: setupLoading } = useProfileSetup();
     const navigate = useNavigate();
-    const { data: sectionsData, isLoading: sectionsLoading } = useAllAnnouncementsFilter(); // Use the new hook
+    const { data: sectionsData, isLoading: sectionsLoading } = useAllAnnouncementsFilter();
     const { data: batchesData, isLoading: batchesLoading } = useBatches();
 
     const [section, setSection] = useState('');
@@ -37,7 +38,6 @@ const ProfileSetup = () => {
     const [officeNumber, setOfficeNumber] = useState('');
     const [errors, setErrors] = useState({});
     
-    // New state for profile image
     const [profileImage, setProfileImage] = useState(null);
     const [previewImage, setPreviewImage] = useState(null);
     const fileInputRef = useRef(null);
@@ -63,14 +63,12 @@ const ProfileSetup = () => {
         const file = e.target.files[0];
         if (!file) return;
 
-        // Preview the image
         const reader = new FileReader();
         reader.onloadend = () => {
             setPreviewImage(reader.result);
         };
         reader.readAsDataURL(file);
 
-        // Store the file for upload
         setProfileImage(file);
     };
 
@@ -82,32 +80,64 @@ const ProfileSetup = () => {
         }
     };
 
+    const validateForm = () => {
+        try {
+            setErrors({});
+            
+            if (user.role === 'student') {
+                studentSchema.parse({ section, rollNo, batchId });
+            } else if (user.role === 'teacher') {
+                teacherSchema.parse({ section });
+            } else if (user.role === 'coordinator') {
+                coordinatorSchema.parse({ department, officeNumber });
+            }
+            
+            return true;
+        } catch (error) {
+            if (error instanceof z.ZodError) {
+                setErrors(error.format());
+            }
+            return false;
+        }
+    };
+
     const handleSubmit = (e) => {
         e.preventDefault();
         
-        // Create FormData for file upload
+        if (!validateForm()) {
+            toast.error('Please fill all required fields correctly');
+            return;
+        }
+        
         const formData = new FormData();
         if (profileImage) {
             formData.append('profileImage', profileImage);
         }
         
-        // Append other form fields
-        const profileData = { section, rollNo, batchId, department, officeNumber };
-        for (const key in profileData) {
-            formData.append(key, profileData[key]);
+        if (user.role === 'student') {
+
+            formData.append('batchId', batchId);
+            formData.append('rollNo', rollNo);
+            formData.append('section', section);
+           
+        } else if (user.role === 'teacher') {
+            formData.append('section', section);
+        } else if (user.role === 'coordinator') {
+            formData.append('department', department);
+            formData.append('officeNumber', officeNumber);
         }
         
-        // Send form data to API
         setupProfile({
             userId: user._id,
             profileData: formData
         }, {
-            onSuccess: () => {
+            onSuccess: (data) => {
+                toast.success('Profile setup completed successfully!');
                 navigate('/');
             },
             onError: (error) => {
                 console.error('Profile setup error:', error);
-                toast.error('Failed to set up profile. Please try again.');
+                toast.error(error?.response?.data?.message || 'Failed to set up profile. Please try again.');
             }
         });
     };
@@ -120,7 +150,6 @@ const ProfileSetup = () => {
         <div className="min-h-screen flex items-center justify-center p-4">
             <div className="w-full max-w-5xl bg-base-100 rounded-2xl shadow-2xl overflow-hidden">
                 <div className="grid md:grid-cols-2 grid-cols-1">
-                    {/* Form Section */}
                     <div className="p-8 md:p-10 bg-base-100">
                         <div className="mb-10">
                             <h2 className="text-3xl font-bold mb-2 text-center bg-gradient-to-r from-green-400 to-emerald-500 text-transparent bg-clip-text">
@@ -129,7 +158,6 @@ const ProfileSetup = () => {
                             <p className="text-center text-gray-500">Complete your profile to get started</p>
                         </div>
 
-                        {/* Profile Image Upload */}
                         <div className="flex flex-col items-center mb-8">
                             <div className="relative">
                                 <div className={`w-32 h-32 rounded-full overflow-hidden flex items-center justify-center border-2 ${previewImage ? 'border-green-500' : 'border-gray-300 bg-gray-100 dark:bg-gray-700'}`}>
@@ -215,12 +243,14 @@ const ProfileSetup = () => {
                                         {errors.section && <p className="text-red-500 text-xs mt-1">{errors.section._errors[0]}</p>}
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium mb-1">Roll No</label>
+                                        <label className="block text-sm font-medium mb-1">Roll No <span className="text-red-500">*</span></label>
                                         <input
                                             type="text"
                                             className="w-full py-3 bg-base-100 rounded-lg border border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-500 px-3 text-base-text"
                                             value={rollNo}
                                             onChange={(e) => setRollNo(e.target.value)}
+                                            placeholder="Enter your roll number"
+                                            required
                                         />
                                         {errors.rollNo && <p className="text-red-500 text-xs mt-1">{errors.rollNo._errors[0]}</p>}
                                     </div>
@@ -275,13 +305,15 @@ const ProfileSetup = () => {
                                 <button 
                                     type="submit" 
                                     className="w-full py-3 px-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200"
+                                    disabled={setupLoading}
                                 >
-                                    Complete Setup
+                                    {setupLoading ? 'Processing...' : 'Complete Setup'}
                                 </button>
                                 <button 
                                     type="button" 
                                     onClick={handleLogout} 
                                     className="w-full py-3 px-4 bg-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-300 transition-all duration-200"
+                                    disabled={setupLoading}
                                 >
                                     Logout
                                 </button>
@@ -289,7 +321,6 @@ const ProfileSetup = () => {
                         </form>
                     </div>
 
-                    {/* Image Section */}
                     <div className="hidden md:block relative">
                         <img 
                             src="https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?q=80&w=1000&auto=format&fit=crop" 

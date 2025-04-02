@@ -28,9 +28,9 @@ const studentColumns = (handleRemoveStudent) => [
     {
         id: 'actions',
         header: 'Actions',
-        cell: ({row}) => (
-            <button 
-                onClick={() => handleRemoveStudent(row.original._id)} 
+        cell: ({ row }) => (
+            <button
+                onClick={() => handleRemoveStudent(row.original._id)}
                 className="flex items-center gap-1.5 text-red-500 bg-red-50 px-2 py-1 rounded-full border border-red-100 hover:bg-red-100 transition-colors"
             >
                 <UserX size={14} />
@@ -56,9 +56,9 @@ const teacherColumns = (handleRemoveTeacher) => [
     {
         id: 'actions',
         header: 'Actions',
-        cell: ({row}) => (
-            <button 
-                onClick={() => handleRemoveTeacher(row.original._id)} 
+        cell: ({ row }) => (
+            <button
+                onClick={() => handleRemoveTeacher(row.original._id)}
                 className="flex items-center gap-1.5 text-red-500 bg-red-50 px-2 py-1 rounded-full border border-red-100 hover:bg-red-100 transition-colors"
             >
                 <UserX size={14} />
@@ -68,7 +68,7 @@ const teacherColumns = (handleRemoveTeacher) => [
     },
 ];
 
-const DataTable = ({columns, data, emptyMessage}) => {
+const DataTable = ({ columns, data, emptyMessage }) => {
     const table = useReactTable({
         data,
         columns,
@@ -83,7 +83,7 @@ const DataTable = ({columns, data, emptyMessage}) => {
                         {table.getHeaderGroups().map(headerGroup => (
                             <tr key={headerGroup.id}>
                                 {headerGroup.headers.map(header => (
-                                    <th 
+                                    <th
                                         key={header.id}
                                         className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
                                     >
@@ -119,17 +119,19 @@ const DataTable = ({columns, data, emptyMessage}) => {
 };
 
 const BatchDetailsPage = () => {
-    const {batchId} = useParams();
-    const {data: batch, isLoading, error} = useBatchDetails(batchId);
+    const { batchId } = useParams();
+    const { data: batch, isLoading, error } = useBatchDetails(batchId);
     const removeStudentFromBatch = useRemoveStudentFromBatch();
     const removeTeacherFromBatch = useRemoveTeacherFromBatch();
+    
+    console.log(batch)
 
     if (isLoading) return (
         <div className="min-h-[60vh] flex items-center justify-center">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
         </div>
     );
-    
+
     if (error) return (
         <div className="min-h-[60vh] flex items-center justify-center">
             <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-md">
@@ -139,9 +141,9 @@ const BatchDetailsPage = () => {
     );
 
     const handleRemoveStudent = (studentId) => {
-        if(window.confirm("Are you sure you want to remove this student from the batch?")) {
+        if (window.confirm("Are you sure you want to remove this student from the batch?")) {
             removeStudentFromBatch.mutate(
-                {studentId, batchId}, 
+                { studentId, batchId },
                 {
                     onSuccess: () => toast.success("Student removed successfully"),
                     onError: (err) => toast.error(err.message || "Failed to remove student")
@@ -151,9 +153,9 @@ const BatchDetailsPage = () => {
     };
 
     const handleRemoveTeacher = (teacherId) => {
-        if(window.confirm("Are you sure you want to remove this teacher from the batch?")) {
+        if (window.confirm("Are you sure you want to remove this teacher from the batch?")) {
             removeTeacherFromBatch.mutate(
-                {teacherId, batchId},
+                { teacherId, batchId },
                 {
                     onSuccess: () => toast.success("Teacher removed successfully"),
                     onError: (err) => toast.error(err.message || "Failed to remove teacher")
@@ -166,8 +168,8 @@ const BatchDetailsPage = () => {
         <div className="p-6 max-w-6xl mx-auto">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
                 <div>
-                    <Link 
-                        to="/batches" 
+                    <Link
+                        to="/batches"
                         className="flex items-center gap-1 text-gray-600 hover:text-gray-900 mb-2"
                     >
                         <ArrowLeft size={16} />
@@ -178,15 +180,15 @@ const BatchDetailsPage = () => {
                     </h1>
                 </div>
                 <div className="flex flex-wrap gap-3 mt-4 md:mt-0">
-                    <Link 
-                        to="/add-teacher" 
+                    <Link
+                        to="/add-teacher"
                         className="flex items-center gap-2 py-2 px-4 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors border border-blue-200"
                     >
                         <Users size={18} />
                         Add Teacher
                     </Link>
-                    <Link 
-                        to="/add-student" 
+                    <Link
+                        to="/add-student"
                         className="flex items-center gap-2 py-2 px-4 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors border border-purple-200"
                     >
                         <UserPlus size={18} />
@@ -194,7 +196,7 @@ const BatchDetailsPage = () => {
                     </Link>
                 </div>
             </div>
-            
+
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
                 <div className="bg-base-100 rounded-2xl shadow-lg p-6 lg:col-span-3">
                     <div className="flex flex-col md:flex-row justify-between mb-2">
@@ -222,17 +224,11 @@ const BatchDetailsPage = () => {
                                     {batch.advisor ? batch.advisor.name : "No advisor assigned"}
                                 </p>
                             </div>
-                            <div>
-                                <p className="text-sm text-gray-500">Created On</p>
-                                <p className="font-medium">
-                                    {new Date(batch.createdAt).toLocaleDateString()}
-                                </p>
-                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-            
+
             <div className="space-y-8">
                 <section>
                     <h2 className="text-xl font-semibold mb-4">Teachers</h2>
@@ -242,7 +238,7 @@ const BatchDetailsPage = () => {
                         emptyMessage="No teachers assigned to this batch yet."
                     />
                 </section>
-                
+
                 <section>
                     <h2 className="text-xl font-semibold mb-4">Students</h2>
                     <DataTable

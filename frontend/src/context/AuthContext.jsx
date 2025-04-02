@@ -5,8 +5,8 @@ const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
     const { data: initialUser, isLoading } = useCheckAuth();
-    console.log('isLoading:', isLoading);
-    console.log('initialUser:', initialUser);
+    // console.log('isLoading:', isLoading);
+    // console.log('initialUser:', initialUser);
     const [user, setUser] = useState(null);
     const [authChecked, setAuthChecked] = useState(false);
 

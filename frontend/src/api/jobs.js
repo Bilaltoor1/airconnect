@@ -8,7 +8,6 @@ export const createJob = async (jobData) => {
     
     // Log the data being sent for debugging
     if (jobData instanceof FormData) {
-        console.log('Sending job data:');
         for (let [key, value] of jobData.entries()) {
             console.log(`${key}: ${value instanceof File ? value.name : value}`);
         }
