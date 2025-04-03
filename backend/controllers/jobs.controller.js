@@ -1,5 +1,6 @@
 import Job from '../models/jobs.model.js';
 import cloudinary from '../helpers/cloudinary.js';
+import { createJobNotification } from '../controllers/notification.controller.js';
 
 // Create a new job post
 const createJob = async (req, res) => {
@@ -47,6 +48,10 @@ const createJob = async (req, res) => {
         });
         
         await newJob.save();
+        
+        // Create notifications for all students
+        await createJobNotification(newJob, req.user);
+        
         res.status(201).json({ message: 'Job created successfully', job: newJob });
     } catch (error) {
         console.error('Error creating job:', error);

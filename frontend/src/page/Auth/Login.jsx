@@ -9,32 +9,39 @@ const Login = () => {
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [errorMessage, setErrorMessage] = useState("");
-	const { mutate: login, isLoading, error } = useLogin();
+	const { mutate: login, isLoading } = useLogin();
 	const navigate = useNavigate();
 	
 	useEffect(() => {
-		if (error) {
-			setErrorMessage(error.response?.data?.message || error.message);
+		if (errorMessage) {
+			toast.error(errorMessage);
 		}
-	}, [error]);
+	}, [errorMessage]);
 
 	const handleLogin = async (e) => {
 		e.preventDefault();
-		login({ email, password }, {
-			onSuccess: (response) => {
-				console.log(response);
-				const user = response.data?.user || response.user;
-				if (user?.profileSetup) {
-					navigate("/");
-				} else {
-					navigate("/profile-setup");
+		setErrorMessage(""); // Clear previous errors
+		
+		try {
+			await login({ email, password }, {
+				onSuccess: (response) => {
+					console.log("Login successful:", response);
+					const user = response.user;
+					if (user?.profileSetup) {
+						navigate("/");
+					} else {
+						navigate("/profile-setup");
+					}
+				},
+				onError: (error) => {
+					console.error('Login failed:', error);
+					setErrorMessage(error.response?.data?.message || "Login failed. Please check your credentials.");
 				}
-			},
-			onError: (error) => {
-				console.error('Login failed:', error.response?.data || error.message);
-				toast.error("Login failed. Please try again.");
-			}
-		});
+			});
+		} catch (error) {
+			console.error("Login exception:", error);
+			setErrorMessage(error.message || "An unexpected error occurred");
+		}
 	};
 
 	return (

@@ -4,9 +4,12 @@ import { useAuth } from "../context/AuthContext.jsx";
 import { fetchStudentsWithoutBatch } from "../api/auth";
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import { initializeSocket } from '../services/socket.service';
 
-// Add the API_URL definition or import
-const API_URL = import.meta.env.MODE === "development" ? "http://localhost:3001/api/auth" : "/api/auth";
+// Define the base API URL correctly
+const BASE_API_URL = import.meta.env.MODE === "development" 
+    ? "http://localhost:3001/api/auth" 
+    : "/api/auth";
 
 export const useSignup = () => {
     const queryClient = useQueryClient();
@@ -19,13 +22,29 @@ export const useSignup = () => {
 
 export const useLogin = () => {
     const queryClient = useQueryClient();
-    const { setUser } = useAuth(); // Access the setUser function from context
-
-    return useMutation(authApi.login, {
-        onSuccess: (user) => {
-            queryClient.setQueryData('user', user);
-            setUser(user); // Set the user state immediately after login
+    const { setUser } = useAuth(); // Get setUser function
+    
+    return useMutation(async (credentials) => {
+        try {
+            // Use the correct backend URL here - this is the key fix
+            const response = await axios.post(`${BASE_API_URL}/login`, credentials, {
+                withCredentials: true
+            });
+            return response.data;
+        } catch (error) {
+            console.error('Login error:', error.response?.data || error.message);
+            throw error;
+        }
+    }, {
+        onSuccess: (data) => {
+            console.log('Login successful, setting user data');
+            queryClient.setQueryData('user', data.user);
+            setUser(data.user); // Update user in context
         },
+        onError: (error) => {
+            console.error('Login mutation error:', error);
+            toast.error(error.response?.data?.message || 'Login failed');
+        }
     });
 };
 
@@ -119,7 +138,7 @@ export const usePendingTeachers = () => {
         ['pendingTeachers'],
         async () => {
             try {
-                const response = await axios.get(`${API_URL}/pending-teachers`, {
+                const response = await axios.get(`${BASE_API_URL}/pending-teachers`, {
                     withCredentials: true, // Ensure cookies are sent with the request
                     headers: {
                         'Content-Type': 'application/json',
@@ -158,7 +177,7 @@ export const useVerifyTeacher = () => {
     const queryClient = useQueryClient();
 
     return useMutation(
-        (data) => axios.post(`${API_URL}/verify-teacher`, data, {
+        (data) => axios.post(`${BASE_API_URL}/verify-teacher`, data, {
             withCredentials: true, // Ensure cookies are sent with the request
             headers: {
                 'Content-Type': 'application/json',

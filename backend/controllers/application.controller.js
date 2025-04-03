@@ -1,5 +1,11 @@
 import Application from '../models/application.model.js';
+import UserModel from '../models/user.model.js';
 import Batch from '../models/batch.model.js';
+import {
+    createApplicationSubmittedNotification,
+    createAdvisorActionNotification,
+    createCoordinatorActionNotification
+} from './notification.controller.js';
 
 export const fetchHistoryofApplication = async (req, res) => {
     const {studentID, advisor, coordinator} = req.query;
@@ -97,6 +103,7 @@ export const fetchApplications = async (req, res) => {
     }
 };
 
+// When a student submits an application
 export const createApplication = async (req, res) => {
     try {
         const {name, email, studentID, rollNo, reason, content} = req.body;
@@ -115,13 +122,18 @@ export const createApplication = async (req, res) => {
         });
 
         await application.save();
+
+        // Send notification to the advisor
+        await createApplicationSubmittedNotification(application, req.user);
+
         res.status(201).json({message: 'Application created successfully', application});
     } catch (error) {
-        console.error(error);
+        console.error('Error creating application:', error);
         res.status(500).json({message: 'Something went wrong, please try again later'});
     }
 };
 
+// When an advisor takes action on an application
 export const updateApplicationByAdvisor = async (req, res) => {
     try {
         const {id} = req.params;
@@ -130,18 +142,29 @@ export const updateApplicationByAdvisor = async (req, res) => {
         const application = await Application.findById(id);
         if (!application) return res.status(404).json({message: 'Application not found'});
 
+        if (application.advisor.toString() !== req.user._id.toString()) {
+            return res.status(403).json({message: 'You are not authorized to update this application'});
+        }
+
         if (signature) application.signature = signature;
         if (applicationStatus) application.applicationStatus = applicationStatus;
         if (advisorComments !== undefined) application.advisorComments = advisorComments;
 
+        application.advisorActionDate = Date.now();
+
         await application.save();
+
+        // Send notifications to student and possibly coordinator
+        await createAdvisorActionNotification(application, req.user);
+
         res.status(200).json({message: 'Application updated successfully', application});
     } catch (error) {
-        console.error(error);
+        console.error('Error updating application:', error);
         res.status(500).json({message: 'Something went wrong, please try again later'});
     }
 };
 
+// When a coordinator takes action on an application
 export const updateApplicationByCoordinator = async (req, res) => {
     try {
         const {id} = req.params;
@@ -150,13 +173,24 @@ export const updateApplicationByCoordinator = async (req, res) => {
         const application = await Application.findById(id);
         if (!application) return res.status(404).json({message: 'Application not found'});
 
+        if (req.user.role !== 'coordinator') {
+            return res.status(403).json({message: 'You are not authorized to update this application'});
+        }
+
         if (applicationStatus) application.applicationStatus = applicationStatus;
         if (coordinatorComments !== undefined) application.coordinatorComments = coordinatorComments;
 
+        application.coordinatorActionDate = Date.now();
+        application.coordinator = req.user._id;
+
         await application.save();
+
+        // Send notifications to student and advisor
+        await createCoordinatorActionNotification(application, req.user);
+
         res.status(200).json({message: 'Application updated successfully', application});
     } catch (error) {
-        console.error(error);
+        console.error('Error updating application:', error);
         res.status(500).json({message: 'Something went wrong, please try again later'});
     }
 };

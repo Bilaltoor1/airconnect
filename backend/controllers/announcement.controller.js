@@ -3,16 +3,20 @@ import Batch from '../models/batch.model.js';
 import cloudinary from '../helpers/cloudinary.js';
 import Comment from '../models/comment.model.js';
 import UserModel from "../models/user.model.js";
+import { createAnnouncementNotification } from './notification.controller.js';
+import { sendBulkNotifications } from '../services/socket.service.js';
 
 export const getAnnouncements = async (req, res) => {
     try {
         const { page = 1, limit = 8, search = '', sort = 'latest', section = 'all', role = 'all', batch = '' } = req.query;
         const query = search ? { description: { $regex: search, $options: 'i' } } : {};
-
+        console.log('Request query params:', req.query);
+        console.log('User role:', req.user.role);
+        console.log('Initial query:', JSON.stringify(query));
         if (req.user.role === 'coordinator') {
             // Coordinator can only see announcements they created
             query.user = req.user._id;
-        } 
+        }
         else if (req.user.role === 'teacher') {
             // Teacher can see:
             // 1. Announcements from coordinators with section='all'
@@ -21,10 +25,10 @@ export const getAnnouncements = async (req, res) => {
             const teacherBatches = await Batch.find({ teachers: req.user._id }).select('name _id');
             const batchNames = teacherBatches.map(batch => batch.name);
             const batchIds = teacherBatches.map(batch => batch._id);
-            
+
             query.$or = [
                 // Coordinator announcements with section='all'
-                { 
+                {
                     $and: [
                         { section: 'all' },
                         { user: { $ne: req.user._id } }, // Not created by this teacher
@@ -32,7 +36,7 @@ export const getAnnouncements = async (req, res) => {
                     ]
                 },
                 // Announcements for batches they teach
-                { 
+                {
                     $and: [
                         { batchName: { $in: batchNames } },
                         { user: { $ne: req.user._id } } // Not created by this teacher
@@ -41,27 +45,49 @@ export const getAnnouncements = async (req, res) => {
                 // Their own announcements
                 { user: req.user._id }
             ];
+
+            if (batch && batch !== '') {
+                console.log('Filtering by batch:', batch);
+                console.log('Teacher batches:', batchNames);
             
-            // If filtering by specific batch
-            if (batch && batchNames.includes(batch)) {
-                // Remove the general batch condition and replace with specific batch
-                query.$or = query.$or.filter(condition => 
-                    !condition.$and || !condition.$and.some(c => c.batchName)
+                // More flexible comparison - case insensitive check
+                const batchMatchFound = batchNames.some(bName =>
+                    bName.toLowerCase() === batch.toLowerCase()
                 );
-                query.$or.push({
-                    $and: [
-                        { batchName: batch },
-                        { user: { $ne: req.user._id } }
-                    ]
-                });
+            
+                if (batchMatchFound) {
+                    // Replace the entire $or array with strict batch conditions
+                    query.$or = [
+                        // Announcements for the specific batch (not created by this teacher)
+                        {
+                            $and: [
+                                { batchName: batch },
+                                { user: { $ne: req.user._id } }
+                            ]
+                        },
+                        // Only include teacher's own announcements for this specific batch
+                        {
+                            $and: [
+                                { batchName: batch },
+                                { user: req.user._id }
+                            ]
+                        }
+                    ];
+            
+                    console.log('Modified query for batch filter:', JSON.stringify(query));
+                } else {
+                    // Teacher trying to filter by a batch they don't teach
+                    console.log('Teacher tried to filter by unauthorized batch');
+                    query._id = null; // Return no results
+                }
             }
-        } 
+        }
         else if (req.user.role === 'student') {
             const user = await UserModel.findById(req.user._id);
             const studentBatch = await Batch.findOne({ students: req.user._id });
             const batchName = studentBatch ? studentBatch.name : null;
             const batchId = studentBatch ? studentBatch._id : null;
-            
+
             query.$or = [
                 // 1. Coordinator announcements with section='all'
                 {
@@ -74,30 +100,34 @@ export const getAnnouncements = async (req, res) => {
                 {
                     $and: [
                         { section: user.section },
-                        { $or: [
-                            { batch: null },
-                            { batch: { $exists: false } },
-                            { batchName: { $exists: false } }
-                        ]}
+                        {
+                            $or: [
+                                { batch: null },
+                                { batch: { $exists: false } },
+                                { batchName: { $exists: false } }
+                            ]
+                        }
                     ]
                 },
                 // 3. Announcements specific to student's batch (fixed logic)
                 {
                     $and: [
-                        { $or: [
-                            { batchName: batchName },
-                            { batch: batchId }
-                        ]}
+                        {
+                            $or: [
+                                { batchName: batchName },
+                                { batch: batchId }
+                            ]
+                        }
                     ]
                 }
             ];
-            
+
             // If filtering by specific batch
             if (batch) {
                 if (batch === batchName) {
                     // Filter to only show batch-specific announcements
-                    query.$or = query.$or.filter(condition => 
-                        condition.$and && condition.$and.some(c => 
+                    query.$or = query.$or.filter(condition =>
+                        condition.$and && condition.$and.some(c =>
                             (c.$or && c.$or.some(o => o.batchName === batchName)) ||
                             (c.batchName === batchName)
                         )
@@ -113,7 +143,7 @@ export const getAnnouncements = async (req, res) => {
             query.$and = [
                 { section: 'all' }
             ];
-            
+
             const coordinators = await UserModel.find({ role: 'coordinator' }).select('_id');
             query.$and.push({ user: { $in: coordinators.map(c => c._id) } });
         }
@@ -155,7 +185,7 @@ export const getAnnouncements = async (req, res) => {
         // Apply role filter
         if (role !== 'all' && !query._id) {
             const usersWithRole = await UserModel.find({ role: role }).select('_id');
-            
+
             // Add user role condition based on existing query structure
             if (query.$or) {
                 // For each OR condition, add user role filter
@@ -197,7 +227,8 @@ export const getAnnouncements = async (req, res) => {
         });
 
         const total = await Announcement.countDocuments(query);
-
+        console.log('Final query:', JSON.stringify(query));
+        console.log('Found announcements:', announcements.length);
         res.status(200).json({
             total,
             page: parseInt(page),
@@ -246,17 +277,17 @@ export const createAnnouncement = async (req, res) => {
                 const isTeacherInBatch = batch.teachers.some(
                     teacher => teacher.toString() === req.user._id.toString()
                 );
-                
+
                 if (!isTeacherInBatch) {
-                    return res.status(403).json({ 
-                        message: 'You do not have permission to create announcements for this batch' 
+                    return res.status(403).json({
+                        message: 'You do not have permission to create announcements for this batch'
                     });
                 }
             }
-            
+
             batchName = batch.name;
         }
-        
+
         const uploadPromises = req.files.map(file => cloudinary.uploader.upload(file.path, {
             resource_type: 'auto' // This allows Cloudinary to automatically detect the file type
         }));
@@ -275,6 +306,10 @@ export const createAnnouncement = async (req, res) => {
         });
 
         await newAnnouncement.save();
+
+        // Create notifications for relevant users
+        await createAnnouncementNotification(newAnnouncement, req.user);
+
         res.status(201).json(newAnnouncement);
     } catch (error) {
         console.error('Error creating announcement:', error);
@@ -364,7 +399,7 @@ export const deleteAnnouncement = async (req, res) => {
 export const updateAnnouncement = async (req, res) => {
     const { id } = req.params;
     const { description, image, section } = req.body;
-    console.log('request body update',req.body);
+    console.log('request body update', req.body);
     try {
 
         const announcement = await Announcement.findById(id);

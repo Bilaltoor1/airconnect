@@ -26,6 +26,7 @@
     "react-query": "^3.39.3",
     "react-router-dom": "^6.26.1",
     "react-signature-canvas": "^1.0.6",
+    "socket.io-client": "^4.8.1",
     "tailwind-merge": "^2.5.2",
     "tailwindcss-animate": "^1.0.7",
     "theme-change": "^2.5.0",

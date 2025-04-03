@@ -59,7 +59,6 @@ const Sidebar = () => {
                 return [
                     { icon: Bell, text: 'Notification', link: '/' },
                     { icon: Briefcase, text: 'Jobs & interns', link: '/job-listings' },
-                    { icon: GraduationCap, text: 'Stud Application', link: '/student-applications' },
                     { icon: BadgePlus, text: 'Announcement', link: '/create-announcement' },
                     { icon: FileSpreadsheet, text: 'Application', link: '/teacher-applications' },
                     { icon: History, text: 'Application history', link: '/teacher-applications-history' },

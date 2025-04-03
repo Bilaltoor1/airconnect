@@ -32,6 +32,14 @@ const ApplicationDetail = () => {
         }
     }, [application]);
     
+    // Check if user arrived from a notification
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        if (params.get('notification') === 'true') {
+            toast.success('You have a new update on this application');
+        }
+    }, [location]);
+    
     const handleChange = (e) => {
         const {name, value} = e.target;
         setFormData({...formData, [name]: value});

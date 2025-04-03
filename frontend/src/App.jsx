@@ -1,3 +1,4 @@
+import React from 'react';
 import ProtectedRoutes from "./components/ProtectedRoutes.jsx";
 import {BrowserRouter as Router, Routes, Route} from 'react-router-dom';
 import Login from "./page/Auth/Login.jsx";
@@ -36,67 +37,70 @@ import ApplicationDetail from "@/page/General/ApplicationDetail.jsx";
 import AnnoucmentDetail from "@/page/General/AnnoucmentDetail.jsx";
 import SectionManagementPage from "./page/Coordinator/SectionManagementPage.jsx";
 import VerifyTeacherPage from './page/Coordinator/VerifyTeacherPage.jsx';
+import { NotificationProvider } from './context/NotificationContext';
 
 function App() {
     return (
         <Router>
-            <Routes>
-                <Route element={<RoleBasedRoutes requiredRole="student"/>}>
-                    <Route element={<BaseLayout/>}>
-                        <Route element={<Student/>} path="/student"/>
-                        <Route path="/student-applications-history" element={<StudentApplicationHistory/>}/>
-                        <Route element={<Application/>} path="/application"/>
-                        <Route element={<Complaints/>} path="/complaints"/>
+            <NotificationProvider>
+                <Routes>
+                    <Route element={<RoleBasedRoutes requiredRole="student"/>}>
+                        <Route element={<BaseLayout/>}>
+                            <Route element={<Student/>} path="/student"/>
+                            <Route path="/student-applications-history" element={<StudentApplicationHistory/>}/>
+                            <Route element={<Application/>} path="/application"/>
+                            <Route element={<Complaints/>} path="/complaints"/>
+                        </Route>
                     </Route>
-                </Route>
-                <Route element={<RoleBasedRoutes requiredRole="teacher"/>}>
-                    <Route element={<BaseLayout/>}>
-                        <Route element={<Teacher/>} path="/teacher"/>
-                        <Route path="/teacher-applications-history" element={<TeacherApplicationHistory/>}/>
-                        <Route element={<TeacherDetail/>} path="/teacher/:id"/>
-                        <Route element={<StudentApplicationsPage/>} path="/student-applications"/>
-                        <Route element={<TeacherApplicationPage/>} path="/teacher-applications"/>
+                    <Route element={<RoleBasedRoutes requiredRole="teacher"/>}>
+                        <Route element={<BaseLayout/>}>
+                            <Route element={<Teacher/>} path="/teacher"/>
+                            <Route path="/teacher-applications-history" element={<TeacherApplicationHistory/>}/>
+                            <Route element={<TeacherDetail/>} path="/teacher/:id"/>
+                            <Route element={<StudentApplicationsPage/>} path="/student-applications"/>
+                            <Route element={<TeacherApplicationPage/>} path="/teacher-applications"/>
+                        </Route>
                     </Route>
-                </Route>
-                <Route element={<RoleBasedRoutes requiredRole="student-affairs"/>}>
-                    <Route element={<BaseLayout/>}>
-                        <Route element={<CreateJob/>} path="/create-jobs"/>
+                    <Route element={<RoleBasedRoutes requiredRole="student-affairs"/>}>
+                        <Route element={<BaseLayout/>}>
+                            <Route element={<CreateJob/>} path="/create-jobs"/>
+                        </Route>
                     </Route>
-                </Route>
-                <Route element={<RoleBasedRoutes requiredRole="coordinator"/>}>
-                    <Route element={<BaseLayout/>}>
-                        <Route path="/batches" element={<BatchesPage/>}/>
-                        <Route path="/add-advisor" element={<AddAdvisorPage/>}/>
-                        <Route path="/add-teacher" element={<AddTeacherPage/>}/>
-                        <Route path="/add-student" element={<AddStudentPage/>}/>
-                        <Route path="/coordinator-applications" element={<CoordinatorApplicationPage/>}/>
-                        <Route path="/batches/:batchId" element={<BatchDetailsPage/>}/>
-                        <Route path="/batches-management" element={<BatchManagementPage/>}/>
-                        <Route path="/section-filter-management" element={<SectionManagementPage/>}/>
-                        <Route path="/coordinator-applications-history" element={<CoordinatorApplicationHistory/>}/>
-                        <Route path="/verify-teachers" element={<VerifyTeacherPage/>}/>
+                    <Route element={<RoleBasedRoutes requiredRole="coordinator"/>}>
+                        <Route element={<BaseLayout/>}>
+                            <Route path="/batches" element={<BatchesPage/>}/>
+                            <Route path="/add-advisor" element={<AddAdvisorPage/>}/>
+                            <Route path="/add-teacher" element={<AddTeacherPage/>}/>
+                            <Route path="/add-student" element={<AddStudentPage/>}/>
+                            <Route path="/coordinator-applications" element={<CoordinatorApplicationPage/>}/>
+                            <Route path="/batches/:batchId" element={<BatchDetailsPage/>}/>
+                            <Route path="/batches-management" element={<BatchManagementPage/>}/>
+                            <Route path="/section-filter-management" element={<SectionManagementPage/>}/>
+                            <Route path="/coordinator-applications-history" element={<CoordinatorApplicationHistory/>}/>
+                            <Route path="/verify-teachers" element={<VerifyTeacherPage/>}/>
+                        </Route>
                     </Route>
-                </Route>
-                <Route element={<ProtectedRoutes/>}>
-                 <Route element={<ChangePassword/>} path="/change-password"/>
-                    <Route element={<BaseLayout/>}>
-                        <Route element={<Home/>} path="/"/>
-                        <Route element={<AnnoucmentDetail/>} path="/announcement/:id"/>
-                        <Route element={<JobListings/>} path="/job-listings"/>
-                        <Route element={<UpdateUser/>} path="/update-user"/>
-                        <Route element={<ViewUser/>} path="/view-user"/>
-                        <Route path="/applications/:id" element={<ApplicationDetail/>}/>
-                        <Route path="/create-announcement" element={<CreatePost/>}/>
+                    <Route element={<ProtectedRoutes/>}>
+                        <Route element={<ChangePassword/>} path="/change-password"/>
+                        <Route element={<BaseLayout/>}>
+                            <Route element={<Home/>} path="/"/>
+                            <Route element={<AnnoucmentDetail/>} path="/announcement/:id"/>
+                            <Route element={<JobListings/>} path="/job-listings"/>
+                            <Route element={<UpdateUser/>} path="/update-user"/>
+                            <Route element={<ViewUser/>} path="/view-user"/>
+                            <Route path="/applications/:id" element={<ApplicationDetail/>}/>
+                            <Route path="/create-announcement" element={<CreatePost/>}/>
+                        </Route>
+                        <Route element={<ProfileSetup/>} path="/profile-setup"/>
                     </Route>
-                    <Route element={<ProfileSetup/>} path="/profile-setup"/>
-                </Route>
-                <Route element={<PublicRoutes/>}>
-                    <Route element={<AuthLayout/>}>
-                        <Route element={<Login/>} path="/login"/>
-                        <Route element={<SignUp/>} path="/signup"/>
+                    <Route element={<PublicRoutes/>}>
+                        <Route element={<AuthLayout/>}>
+                            <Route element={<Login/>} path="/login"/>
+                            <Route element={<SignUp/>} path="/signup"/>
+                        </Route>
                     </Route>
-                </Route>
-            </Routes>
+                </Routes>
+            </NotificationProvider>
         </Router>
     );
 }

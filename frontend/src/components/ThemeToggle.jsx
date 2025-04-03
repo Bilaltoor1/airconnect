@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { themeChange } from 'theme-change';
+import { Sun, Moon } from 'lucide-react';
 
 const ThemeToggle = () => {
     const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
@@ -16,13 +17,17 @@ const ThemeToggle = () => {
     };
 
     return (
-        <div className="flex justify-center">
-            <label className="swap swap-rotate">
-                <input type="checkbox" onChange={handleThemeChange} checked={theme === 'dark'} />
-                <div className="swap-on text-xl">☀️</div>
-                <div className="swap-off text-xl">🌙</div>
-            </label>
-        </div>
+        <button
+            className="relative p-2 rounded-full hover:bg-base-300 transition-colors"
+            onClick={handleThemeChange}
+            aria-label="Toggle theme"
+        >
+            {theme === 'dark' ? (
+                <Sun size={20} className="text-yellow-400" />
+            ) : (
+                <Moon size={20} className="text-blue-400" />
+            )}
+        </button>
     );
 };
 

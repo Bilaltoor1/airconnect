@@ -1,5 +1,6 @@
 import {Popover, PopoverButton, PopoverPanel} from '@headlessui/react';
 import ThemeToggle from "./ThemeToggle.jsx";
+import NotificationBell from './NotificationBell'; // Add this import
 import {Link, useNavigate} from "react-router-dom";
 import {useLogout} from "../hooks/useAuth.js";
 import {useState, useEffect, useRef} from "react";
@@ -33,6 +34,7 @@ function Header() {
 
     return (
         <div className='flex w-full px-6 border-b border-b-neutral border-opacity-40 h-16 items-center justify-end'>
+            <NotificationBell />
             <ThemeToggle/>
             <Popover className="relative">
                 <PopoverButton className="btn m-1 bg-transparent border-none hover:bg-transparent">

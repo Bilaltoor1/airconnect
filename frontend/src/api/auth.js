@@ -11,7 +11,7 @@ export const signup = async ({ email, password, name, role }) => {
 
 export const login = async ({ email, password }) => {
     const response = await axios.post(`${API_URL}/login`, { email, password });
-    return response.data.user;
+    return response.data;
 };
 
 export const logout = async () => {
