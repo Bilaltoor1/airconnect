@@ -76,10 +76,12 @@ export const useUpdateAnnouncement = () => {
     const queryClient = useQueryClient();
     return useMutation((data) => {
         console.log('Data in useUpdateAnnouncement:', data); // Add this line
-        return updateAnnouncement(data.id, data);
+        // The formData is being properly passed, but we need to use data.formData instead of data
+        return updateAnnouncement(data.id, data.formData);
     }, {
         onSuccess: () => {
             queryClient.invalidateQueries(['announcements']);
+            queryClient.invalidateQueries(['announcement']); // Also invalidate single announcement queries
         },
         onError: (error) => {
             console.error('Update operation failed:', error.response?.data || error.message);

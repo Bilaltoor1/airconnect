@@ -16,7 +16,7 @@ router.post('/', verifyToken, restrictTo('coordinator', 'teacher'), upload.array
 router.post('/:id/like', verifyToken, likeAnnouncement);
 router.post('/:id/dislike', verifyToken, dislikeAnnouncement);
 router.delete('/:id', verifyToken, restrictTo('coordinator', 'teacher'), deleteAnnouncement);
-router.put('/:id', verifyToken, restrictTo('coordinator', 'teacher'), updateAnnouncement);
+router.put('/:id', verifyToken, restrictTo('coordinator', 'teacher'), upload.array('files', 5), updateAnnouncement);
 router.post('/:announcementId/comments', verifyToken, addComment);
 router.get('/:announcementId/comments', verifyToken, getComments);
 

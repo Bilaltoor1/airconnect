@@ -49,7 +49,7 @@ export const updateAnnouncement = async (id, announcementData) => {
         }
     };
     
-    const response = await axios.patch(`${API_URL}/${id}`, announcementData, config);
+    const response = await axios.put(`${API_URL}/${id}`, announcementData, config);
     return response.data;
 };
 

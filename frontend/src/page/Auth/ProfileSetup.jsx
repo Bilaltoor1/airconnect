@@ -63,6 +63,24 @@ const ProfileSetup = () => {
         const file = e.target.files[0];
         if (!file) return;
 
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+            toast.error('Please select an image file');
+            if (fileInputRef.current) {
+                fileInputRef.current.value = "";
+            }
+            return;
+        }
+
+        // Validate file size (5MB max)
+        if (file.size > 5 * 1024 * 1024) {
+            toast.error('Image size must be less than 5MB');
+            if (fileInputRef.current) {
+                fileInputRef.current.value = "";
+            }
+            return;
+        }
+
         const reader = new FileReader();
         reader.onloadend = () => {
             setPreviewImage(reader.result);
@@ -70,6 +88,7 @@ const ProfileSetup = () => {
         reader.readAsDataURL(file);
 
         setProfileImage(file);
+        console.log('Profile image selected:', file.name, 'Size:', Math.round(file.size/1024), 'KB');
     };
 
     const removeImage = () => {
@@ -111,21 +130,27 @@ const ProfileSetup = () => {
         
         const formData = new FormData();
         if (profileImage) {
+            console.log('Adding profile image to form data:', profileImage.name);
             formData.append('profileImage', profileImage);
         }
         
         if (user.role === 'student') {
-
             formData.append('batchId', batchId);
             formData.append('rollNo', rollNo);
             formData.append('section', section);
-           
         } else if (user.role === 'teacher') {
             formData.append('section', section);
         } else if (user.role === 'coordinator') {
             formData.append('department', department);
             formData.append('officeNumber', officeNumber);
         }
+        
+        // Debug log to verify data
+        const formDataObj = {};
+        formData.forEach((value, key) => {
+            formDataObj[key] = value instanceof File ? `File: ${value.name} (${Math.round(value.size/1024)}KB)` : value;
+        });
+        console.log('Submitting profile data:', formDataObj);
         
         setupProfile({
             userId: user._id,

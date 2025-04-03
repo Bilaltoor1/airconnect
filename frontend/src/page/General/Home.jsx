@@ -167,8 +167,8 @@ const HomePage = () => {
                             </select>
                         </div>
                         
-                        {/* Section Filter - Only visible to coordinators, teachers, and student affairs */}
-                        {(user.role === 'coordinator' || user.role === 'teacher' || user.role === 'student-affairs') && (
+                        {/* Section Filter - Only visible to coordinators and student affairs */}
+                        {(user.role === 'coordinator' || user.role === 'student-affairs') && (
                             <div className="flex items-center">
                                 <label className="mr-2 text-sm font-medium whitespace-nowrap">Section:</label>
                                 <select

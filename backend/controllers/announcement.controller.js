@@ -5,6 +5,8 @@ import Comment from '../models/comment.model.js';
 import UserModel from "../models/user.model.js";
 import { createAnnouncementNotification } from './notification.controller.js';
 import { sendBulkNotifications } from '../services/socket.service.js';
+import { uploadMultipleToCloudinaryWithRetry } from '../helpers/cloudinaryUpload.js';
+import fs from 'fs';
 
 export const getAnnouncements = async (req, res) => {
     try {
@@ -77,7 +79,6 @@ export const getAnnouncements = async (req, res) => {
                     console.log('Modified query for batch filter:', JSON.stringify(query));
                 } else {
                     // Teacher trying to filter by a batch they don't teach
-                    console.log('Teacher tried to filter by unauthorized batch');
                     query._id = null; // Return no results
                 }
             }
@@ -397,11 +398,13 @@ export const deleteAnnouncement = async (req, res) => {
 
 // Update an announcement by ID
 export const updateAnnouncement = async (req, res) => {
-    const { id } = req.params;
-    const { description, image, section } = req.body;
-    console.log('request body update', req.body);
     try {
-
+        const { id } = req.params;
+        const { description, section, existingMedia, batchId } = req.body;
+        
+        console.log('Update announcement request:', { id, description, section, batchId });
+        console.log('Files in request:', req.files?.length || 'No files');
+        
         const announcement = await Announcement.findById(id);
 
         if (!announcement) {
@@ -413,19 +416,105 @@ export const updateAnnouncement = async (req, res) => {
             return res.status(403).json({ message: 'You do not have permission to update this announcement' });
         }
 
+        // Update text fields
         announcement.description = description;
-        announcement.image = image;
         announcement.section = section;
+        
+        // Handle batch update if provided
+        let batchName = announcement.batchName;
+        if (batchId) {
+            const batch = await Batch.findById(batchId);
+            if (!batch) {
+                return res.status(404).json({ message: 'Batch not found' });
+            }
+
+            // If user is a teacher, verify they belong to this batch
+            if (req.user.role === 'teacher') {
+                const isTeacherInBatch = batch.teachers.some(
+                    teacher => teacher.toString() === req.user._id.toString()
+                );
+
+                if (!isTeacherInBatch) {
+                    return res.status(403).json({
+                        message: 'You do not have permission to update announcements for this batch'
+                    });
+                }
+            }
+
+            // Update batch info
+            announcement.batch = batchId;
+            announcement.batchName = batch.name;
+            batchName = batch.name;
+        } else if (batchId === '') {
+            // If batch ID is empty string, remove batch association
+            announcement.batch = null;
+            announcement.batchName = null;
+            batchName = null;
+        }
+
+        // Handle media files
+        let mediaUrls = [];
+        
+        // Process existing media if provided
+        if (existingMedia) {
+            try {
+                const parsedExistingMedia = JSON.parse(existingMedia);
+                if (Array.isArray(parsedExistingMedia)) {
+                    mediaUrls = [...parsedExistingMedia];
+                }
+            } catch (err) {
+                console.error('Error parsing existing media:', err);
+                // Continue without existing media rather than failing the whole request
+            }
+        }
+        
+        // Upload new files if any
+        if (req.files && req.files.length > 0) {
+            try {
+                console.log('Uploading files to Cloudinary...');
+                const filePaths = req.files.map(file => file.path);
+                
+                // Use the retry-capable upload function
+                const uploadResults = await uploadMultipleToCloudinaryWithRetry(filePaths);
+                const newMediaUrls = uploadResults.map(upload => upload.secure_url);
+                
+                // Combine with existing media
+                mediaUrls = [...mediaUrls, ...newMediaUrls];
+                
+                // Clean up temp files after successful upload
+                req.files.forEach(file => {
+                    try {
+                        fs.unlinkSync(file.path);
+                    } catch (err) {
+                        console.error('Error deleting temp file:', err);
+                    }
+                });
+            } catch (uploadError) {
+                console.error('Failed to upload files to Cloudinary:', uploadError);
+                return res.status(500).json({ 
+                    message: 'Failed to upload files. Please try again later.',
+                    error: uploadError.message
+                });
+            }
+        }
+        
+        // Update the media array
+        announcement.media = mediaUrls;
 
         await announcement.save();
-
-        res.status(200).json(announcement);
+        
+        res.status(200).json({
+            message: 'Announcement updated successfully',
+            announcement
+        });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Something went wrong, please try again later next time' });
+        console.error('Error updating announcement:', error);
+        res.status(500).json({ 
+            message: 'Something went wrong, please try again later',
+            error: error.message
+        });
     }
 };
-
 
 // Add a comment to an announcement
 export const addComment = async (req, res) => {

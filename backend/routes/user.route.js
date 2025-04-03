@@ -13,16 +13,24 @@ import {verifyToken} from "../middleware/verifyToken.js";
 import {checkCoordinator} from "../middleware/checkCoordinator.js";
 import multer from 'multer';
 import path from 'path';
+import fs from 'fs';
 
 const router = express.Router()
+
+// Ensure upload directory exists
+const uploadDir = './uploads/profile';
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+    console.log('Created uploads/profile directory');
+}
 
 // Configure multer for profile image uploads
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, './uploads/profile')
+        cb(null, uploadDir)
     },
     filename: function (req, file, cb) {
-        cb(null, Date.now() + path.extname(file.originalname))
+        cb(null, Date.now() + '-' + file.originalname.replace(/\s+/g, '-'))
     }
 });
 

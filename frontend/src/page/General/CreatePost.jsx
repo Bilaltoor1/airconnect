@@ -1,11 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Paperclip, Send, MessageSquare, FileText, Users, X, FileType } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useCreateAnnouncement } from '@/hooks/useAnnouncement.js';
 import { useAnnouncementsFilter } from '@/hooks/useAnnouncementFilter.js';
 import { useBatchFilter } from '@/hooks/useAnnouncementFilter.js';
-import BatchSelect from '../../components/BatchSelect.jsx';
 
 const CreatePost = () => {
     const { user } = useAuth();
@@ -16,9 +15,49 @@ const CreatePost = () => {
     const [media, setMedia] = useState([]);
     const [section, setSection] = useState(user.section || 'all');
     const [batchId, setBatchId] = useState('');
-    const [errors, setErrors] = useState({});
     const [selectedFiles, setSelectedFiles] = useState([]);
     const [filesPreviews, setFilesPreviews] = useState([]);
+    const [teacherSections, setTeacherSections] = useState([]);
+
+    // Extract teacher sections from batches
+    useEffect(() => {
+        if (user.role === 'teacher' && batchesData && batchesData.length > 0) {
+            // Extract unique sections from batch names (assuming format like "SE-Fall-21")
+            const sections = new Set();
+            
+            // Always include the teacher's own section if it exists
+            if (user.section) {
+                sections.add(user.section);
+            }
+            
+            // Extract section codes from batch names
+            batchesData.forEach(batch => {
+                const batchParts = batch.name.split('-');
+                if (batchParts.length > 0) {
+                    sections.add(batchParts[0]);
+                }
+            });
+            
+            setTeacherSections(Array.from(sections));
+        }
+    }, [batchesData, user.role, user.section]);
+
+    // Filter sections based on user role
+    const getFilteredSections = () => {
+        if (!sectionsData) return [];
+        
+        // Coordinators see all sections
+        if (user.role === 'coordinator') return sectionsData;
+        
+        // Teachers see only sections they teach plus 'all'
+        if (user.role === 'teacher') {
+            return sectionsData.filter(s => 
+                s.section === 'all' || teacherSections.includes(s.section)
+            );
+        }
+        
+        return sectionsData;
+    };
 
     const getFileIcon = (fileType) => {
         if (fileType.includes('image')) return '🖼️';
@@ -153,7 +192,7 @@ const CreatePost = () => {
                                 {sectionsLoading ? (
                                     <option>Loading...</option>
                                 ) : (
-                                    sectionsData.map((section) => (
+                                    getFilteredSections().map((section) => (
                                         <option key={section._id} value={section.section}>
                                             {section.section}
                                         </option>

@@ -51,6 +51,9 @@ export const resetPassword = async (token, password) => {
 };
 
 export const profileSetup = async ({ userId, profileData }) => {
+    // Add userId to the FormData
+    profileData.append('userId', userId);
+    
     // Configure axios to properly handle FormData
     const config = {
         headers: {
@@ -59,20 +62,51 @@ export const profileSetup = async ({ userId, profileData }) => {
         withCredentials: true
     };
     
-    const response = await axios.post(
-        `${API_URL}/profile-setup`, 
-        profileData,  // FormData object
-        config
-    );
-    
-    return response.data.user;
+    try {
+        console.log('Sending profile setup request with:', 
+            Array.from(profileData.entries()).reduce((obj, [key, value]) => {
+                obj[key] = value instanceof File ? `File: ${value.name}` : value;
+                return obj;
+            }, {})
+        );
+        
+        const response = await axios.post(
+            `${API_URL}/profile-setup`, 
+            profileData,  // FormData object
+            config
+        );
+        
+        return response.data.user;
+    } catch (error) {
+        console.error('Profile setup error:', error.response?.data || error.message);
+        throw error;
+    }
 };
 
 export const updateUser = async (userData) => {
-    const response = await axios.patch(`${API_URL}/update-user`, userData);
-    return response.data.user;
+    // Configure axios to properly handle FormData with files
+    const config = {
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        },
+        withCredentials: true
+    };
+    
+    try {
+        console.log('Sending update user request with:', 
+            Array.from(userData.entries()).reduce((obj, [key, value]) => {
+                obj[key] = value instanceof File ? `File: ${value.name}` : value;
+                return obj;
+            }, {})
+        );
+        
+        const response = await axios.patch(`${API_URL}/update-user`, userData, config);
+        return response.data.user;
+    } catch (error) {
+        console.error('Update user error:', error.response?.data || error.message);
+        throw error;
+    }
 };
-
 
 export const changePassword = async ({ currentPassword, newPassword }) => {
     const response = await axios.post(`${API_URL}/change-password`, { currentPassword, newPassword });

@@ -35,7 +35,6 @@ const UpdateUser = () => {
         batchId: user?.batchId || ''
     });
 
-    // New state for profile image
     const [profileImage, setProfileImage] = useState(null);
     const [previewImage, setPreviewImage] = useState(user?.profileImage || null);
 
@@ -55,6 +54,24 @@ const UpdateUser = () => {
         const file = e.target.files[0];
         if (!file) return;
 
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+            toast.error('Please select an image file');
+            if (fileInputRef.current) {
+                fileInputRef.current.value = "";
+            }
+            return;
+        }
+
+        // Validate file size (5MB max)
+        if (file.size > 5 * 1024 * 1024) {
+            toast.error('Image size must be less than 5MB');
+            if (fileInputRef.current) {
+                fileInputRef.current.value = "";
+            }
+            return;
+        }
+
         // Preview the image
         const reader = new FileReader();
         reader.onloadend = () => {
@@ -64,6 +81,7 @@ const UpdateUser = () => {
 
         // Store the file for upload
         setProfileImage(file);
+        console.log('Profile image selected:', file.name, 'Size:', Math.round(file.size / 1024), 'KB');
     };
 
     const removeImage = () => {
@@ -123,8 +141,16 @@ const UpdateUser = () => {
         
         // Add profile image if changed
         if (profileImage) {
+            console.log('Adding profile image to form data:', profileImage.name);
             formDataObj.append('profileImage', profileImage);
         }
+        
+        // Debug log to verify data
+        const logObj = {};
+        formDataObj.forEach((value, key) => {
+            logObj[key] = value instanceof File ? `File: ${value.name} (${Math.round(value.size/1024)}KB)` : value;
+        });
+        console.log('Updating profile with data:', logObj);
         
         updateUser(formDataObj, {
             onSuccess: () => {
@@ -132,7 +158,8 @@ const UpdateUser = () => {
                 navigate('/');
             },
             onError: (error) => {
-                toast.error('Failed to update profile');
+                const errorMessage = error?.response?.data?.message || 'Failed to update profile';
+                toast.error(errorMessage);
                 console.error('Update failed', error);
             }
         });

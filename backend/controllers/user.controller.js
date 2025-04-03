@@ -4,6 +4,18 @@ import { generateTokenAndSetCookie } from "../GenerateTokenAndSetCookie.js";
 import Batch from "../models/batch.model.js";
 import cloudinary from '../helpers/cloudinary.js';  // Make sure to import cloudinary
 
+const uploadToCloudinaryWithRetry = async (filePath, options) => {
+    let attempts = 3;
+    while (attempts > 0) {
+        try {
+            return await cloudinary.uploader.upload(filePath, options);
+        } catch (error) {
+            attempts -= 1;
+            if (attempts === 0) throw error;
+        }
+    }
+};
+
 // Update signup function to only allow student and teacher roles
 const signup = async (req, res) => {
     try {
@@ -125,12 +137,10 @@ const getUser = async (req, res) => {
 
 const updateProfileSetup = async (req, res) => {
     try {
-        console.log('Profile setup request received:', req.body);
-        console.log('File:', req.file);
-
-        const userId = req.user._id;
+        const { userId } = req.body;
+        console.log('Profile setup request received:', { userId, file: req.file ? 'File received' : 'No file' });
+        
         const profileData = req.body;
-        console.log('Profile data:', profileData);
         
         // Find the user first to determine the role
         const user = await UserModel.findById(userId);
@@ -147,16 +157,24 @@ const updateProfileSetup = async (req, res) => {
         // Handle profile image upload
         if (req.file) {
             try {
-                // Upload to Cloudinary if a file was provided
-                const result = await cloudinary.uploader.upload(req.file.path, {
+                console.log('Uploading profile image to Cloudinary:', req.file.path);
+                // Use the cloudinaryUpload helper with retry logic
+                const result = await uploadToCloudinaryWithRetry(req.file.path, {
                     folder: 'user_profiles',
+                    resource_type: 'image'
                 });
                 
                 // Add the image URL to update data
                 updateData.profileImage = result.secure_url;
+                console.log('Image uploaded successfully:', result.secure_url);
                 
                 // Remove local file after upload to cloudinary
-                fs.unlinkSync(req.file.path);
+                try {
+                    fs.unlinkSync(req.file.path);
+                    console.log('Temporary file removed');
+                } catch (cleanupError) {
+                    console.error('Error removing temporary file:', cleanupError);
+                }
             } catch (uploadError) {
                 console.error('Error uploading to Cloudinary:', uploadError);
                 // Continue without failing the whole operation
@@ -216,23 +234,44 @@ const updateProfileSetup = async (req, res) => {
 
 const updateUser = async (req, res) => {
     try {
-        const { userId, ...profileData } = req.body;
+        const userId = req.body.userId;
+        console.log('Update user request received:', { userId, file: req.file ? 'File received' : 'No file' });
+        
         const user = await UserModel.findById(userId);
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
 
+        // Extract profile data from request body
+        const profileData = { ...req.body };
+        delete profileData.userId; // Remove userId from the fields to update
+
         // Handle profile image upload if present
-        if (req.body.profileImage) {
+        if (req.file) {
             try {
-                // Upload to Cloudinary
-                const uploadResult = await cloudinary.uploader.upload(req.body.profileImage, {
-                    folder: "user_profiles",
+                console.log('Uploading profile image to Cloudinary:', req.file.path);
+                // Use the cloudinaryUpload helper with retry logic
+                const uploadResult = await uploadToCloudinaryWithRetry(req.file.path, {
+                    folder: 'user_profiles',
+                    resource_type: 'image'
                 });
+                
                 profileData.profileImage = uploadResult.secure_url;
+                console.log('Image uploaded successfully:', uploadResult.secure_url);
+                
+                // Remove local file after upload to cloudinary
+                try {
+                    fs.unlinkSync(req.file.path);
+                    console.log('Temporary file removed');
+                } catch (cleanupError) {
+                    console.error('Error removing temporary file:', cleanupError);
+                }
             } catch (uploadError) {
-                console.error("Error uploading image:", uploadError);
-                // Continue without image if upload fails
+                console.error('Error uploading image:', uploadError);
+                return res.status(500).json({ 
+                    message: 'Failed to upload profile image',
+                    error: uploadError.message
+                });
             }
         }
 
