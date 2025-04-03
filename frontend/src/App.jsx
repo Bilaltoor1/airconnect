@@ -38,11 +38,17 @@ import AnnoucmentDetail from "@/page/General/AnnoucmentDetail.jsx";
 import SectionManagementPage from "./page/Coordinator/SectionManagementPage.jsx";
 import VerifyTeacherPage from './page/Coordinator/VerifyTeacherPage.jsx';
 import { NotificationProvider } from './context/NotificationContext';
+import PWAInstallPrompt from './components/PWAInstallPrompt.jsx';
+import OfflineFallback from './components/OfflineFallback.jsx';
+import SplashScreen from './components/SplashScreen.jsx';
 
 function App() {
     return (
         <Router>
             <NotificationProvider>
+                <SplashScreen />
+                <OfflineFallback />
+                <PWAInstallPrompt />
                 <Routes>
                     <Route element={<RoleBasedRoutes requiredRole="student"/>}>
                         <Route element={<BaseLayout/>}>
