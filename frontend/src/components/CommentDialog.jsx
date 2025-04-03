@@ -45,12 +45,20 @@ const CommentDialog = ({ announcementId, onClose }) => {
                                     {page.comments.map(comment => (
                                         <div key={comment._id} className="flex gap-3">
                                             <div className="avatar">
-                                                <div className="w-10 h-10 rounded-full">
-                                                    <img
-                                                        src={comment.user?.profileImage || `https://avatar.iran.liara.run/username?username=${comment?.user?.name}`}
-                                                        alt={comment.user?.name || "User"}
-                                                        className="object-cover w-full h-full"
-                                                    />
+                                                <div className="w-10 h-10 rounded-full overflow-hidden bg-base-200">
+                                                    {comment.user?.profileImage ? (
+                                                        <img
+                                                            src={comment.user.profileImage}
+                                                            alt={comment.user?.name || "User"}
+                                                            className="w-full h-full object-cover"
+                                                        />
+                                                    ) : (
+                                                        <img
+                                                            src={`https://avatar.iran.liara.run/username?username=${comment.user?.name || 'anonymous'}`}
+                                                            alt={comment.user?.name || "User"}
+                                                            className="w-full h-full object-cover"
+                                                        />
+                                                    )}
                                                 </div>
                                             </div>
                                             <div className="bg-base-200 p-3 rounded-lg flex-grow">
@@ -84,12 +92,20 @@ const CommentDialog = ({ announcementId, onClose }) => {
                 <div className="border-t border-base-200 p-4">
                     <form onSubmit={handleSubmit} className="flex gap-2">
                         <div className="avatar">
-                            <div className="w-10 h-10 rounded-full">
-                                <img
-                                    src={user?.profileImage || `https://avatar.iran.liara.run/username?username=${user?.name}`}
-                                    alt={user?.name || "User"}
-                                    className="object-cover w-full h-full"
-                                />
+                            <div className="w-10 h-10 rounded-full overflow-hidden bg-base-200">
+                                {user?.profileImage ? (
+                                    <img
+                                        src={user.profileImage}
+                                        alt={user?.name || "User"}
+                                        className="w-full h-full object-cover"
+                                    />
+                                ) : (
+                                    <img
+                                        src={`https://avatar.iran.liara.run/username?username=${user?.name || 'anonymous'}`}
+                                        alt={user?.name || "User"}
+                                        className="w-full h-full object-cover"
+                                    />
+                                )}
                             </div>
                         </div>
                         <div className="relative flex-1">

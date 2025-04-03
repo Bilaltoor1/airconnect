@@ -47,7 +47,11 @@ function Header() {
                                     className="w-full h-full object-cover"
                                 />
                             ) : (
-                                <User className="w-5 h-5 text-base-content opacity-70" />
+                                <img 
+                                    src={`https://avatar.iran.liara.run/username?username=${user?.name || 'anonymous'}`}
+                                    alt={`${user?.name || 'User'}'s avatar`}
+                                    className="w-full h-full object-cover"
+                                />
                             )}
                         </div>
                     </div>

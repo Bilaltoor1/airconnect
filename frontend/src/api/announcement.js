@@ -14,7 +14,8 @@ export const fetchAnnouncements = async (params) => {
         sort: sort || 'latest',
         section: section || 'all',
         role: role || 'all',
-        batch: batch || ''
+        batch: batch || '',
+        populate: 'user' // Add this parameter to ensure user is populated
     });
     
     const response = await axios.get(`${API_URL}?${queryParams}`);
@@ -22,7 +23,8 @@ export const fetchAnnouncements = async (params) => {
 };
 
 export const fetchAnnouncementById = async (id) => {
-    const response = await axios.get(`${API_URL}/${id}`);
+    // Add populate parameter to ensure user details are included
+    const response = await axios.get(`${API_URL}/${id}?populate=user`);
     return response.data;
 };
 

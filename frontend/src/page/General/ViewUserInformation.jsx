@@ -110,28 +110,7 @@ const ViewUser = () => {
                                     </div>
                                 </div>
                             )}
-                            
-                            {user.role === 'coordinator' && (
-                                <>
-                                    <div className="transition-all duration-200">
-                                        <label className="block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300">Department</label>
-                                        <div className="relative group">
-                                            <Briefcase className="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-                                            <div className="w-full py-2.5 md:py-3.5 pl-11 bg-base-100 rounded-xl border border-gray-200 dark:border-gray-700 px-4 text-base-text text-sm md:text-base">
-                                                {user.department}
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <div className="transition-all duration-200">
-                                        <label className="block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300">Office Number</label>
-                                        <div className="w-full py-2.5 md:py-3.5 px-4 bg-base-100 rounded-xl border border-gray-200 dark:border-gray-700 text-base-text text-sm md:text-base">
-                                            {user.officeNumber}
-                                        </div>
-                                    </div>
-                                </>
-                            )}
-                            
+                                                        
                             <div className="pt-4 md:pt-6">
                                 <Link 
                                     to='/' 

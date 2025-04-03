@@ -213,7 +213,7 @@ export const getAnnouncements = async (req, res) => {
         const sortOrder = sort === 'latest' ? { created: -1 } : { created: 1 };
 
         const announcements = await Announcement.find(query)
-            .populate('user', '_id name email role')
+            .populate('user', '_id name email role profileImage')
             .sort(sortOrder)
             .skip((page - 1) * limit)
             .limit(parseInt(limit));

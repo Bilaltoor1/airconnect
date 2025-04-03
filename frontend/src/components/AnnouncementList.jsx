@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useLikeAnnouncement, useDislikeAnnouncement } from '../hooks/useAnnouncement';
 import MediaDisplay from './MediaDisplay';
+import UserAvatar from './UserAvatar';
 
 const AnnouncementList = ({ announcements }) => {
   return (
@@ -54,15 +55,7 @@ const AnnouncementItem = ({ announcement }) => {
       <div className="p-6">
         <div className="flex justify-between items-start">
           <div className="flex items-center space-x-4">
-            <div className="avatar">
-              <div className="w-10 h-10 rounded-full">
-                <img 
-                  src={announcement.user?.profileImage || `https://avatar.iran.liara.run/username?username=${announcement.user?.name}`} 
-                  alt={announcement.user?.name} 
-                  className="object-cover"
-                />
-              </div>
-            </div>
+            <UserAvatar user={announcement.user} size="md" />
             
             <div>
               <h3 className="font-semibold text-lg">{announcement.user?.name}</h3>

@@ -8,6 +8,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import AnnouncementBadges from './AnnouncementBadges';
 import MediaDisplay from './MediaDisplay';
+import UserAvatar from './UserAvatar';
 
 const AnnouncementsListing = ({ announcements }) => {
     const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
@@ -84,17 +85,7 @@ const AnnouncementCard = ({ announcement, handleLike, hasLiked, handleDislike, h
     return (
         <div className="flex flex-col">
             <div className="flex items-start space-x-4">
-                <div className="w-12 h-12 rounded-full overflow-hidden bg-base-200 flex items-center justify-center">
-                    {announcement.user?.profileImage ? (
-                        <img
-                            src={announcement.user.profileImage}
-                            alt={`${announcement.user?.name || 'User'}'s profile`} 
-                            className="w-full h-full object-cover"
-                        />
-                    ) : (
-                        <User className="w-6 h-6 text-gray-500" />
-                    )}
-                </div>
+                <UserAvatar user={announcement.user} size="lg" />
                 <div className="flex-1">
                     <div className="flex justify-between items-center">
                         <div>

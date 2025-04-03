@@ -5,6 +5,7 @@ import {getStatusColor} from '@/utils/applicationStatusColors';
 import {motion} from 'framer-motion';
 import {useAuth} from '@/context/AuthContext.jsx';
 import toast from 'react-hot-toast';
+import UserAvatar from '@/components/UserAvatar'; // Add this import
 
 const ApplicationDetail = () => {
     const {id} = useParams();
@@ -117,13 +118,13 @@ const ApplicationDetail = () => {
                 initial={{opacity: 0, y: 20}}
                 animate={{opacity: 1, y: 0}}
                 transition={{duration: 0.5}}
-                className="bg-white p-8 rounded-xl shadow-lg border border-gray-200">
+                className="bg-base-100 p-8 rounded-xl shadow-lg border border-base-300">
                 
                 {/* University Header */}
-                <div className="flex justify-between items-center border-b-2 border-blue-800 pb-4 mb-6">
+                <div className="flex justify-between items-center border-b-2 border-primary pb-4 mb-6">
                     <div className="text-center w-full">
-                        <h1 className="text-2xl font-bold text-blue-800">AIR UNIVERSITY MULTAN</h1>
-                        <p className="text-gray-600">Excellence in Education and Research</p>
+                        <h1 className="text-2xl font-bold text-primary">AIR UNIVERSITY MULTAN</h1>
+                        <p className="text-base-content/70">Excellence in Education and Research</p>
                     </div>
                 </div>
                 
@@ -136,7 +137,7 @@ const ApplicationDetail = () => {
                     <p><span className="font-semibold">Subject:</span> {editMode ? 
                         <select
                             name="reason"
-                            className="select select-sm border-gray-300 ml-2"
+                            className="select select-sm border-base-300 ml-2"
                             value={formData.reason}
                             onChange={handleChange}
                         >
@@ -167,7 +168,7 @@ const ApplicationDetail = () => {
                             onChange={handleChange}
                         />
                     ) : (
-                        <div className="border p-4 rounded min-h-[200px] whitespace-pre-line">{application.content}</div>
+                        <div className="border border-base-300 p-4 rounded min-h-[200px] whitespace-pre-line">{application.content}</div>
                     )}
                 </div>
                 
@@ -238,39 +239,43 @@ const ApplicationDetail = () => {
                     <h3 className="text-lg font-semibold mb-4">Discussion Thread:</h3>
                     
                     {commentsError ? (
-                        <p className="text-red-500">Error loading comments. Please try again later.</p>
+                        <p className="text-error">Error loading comments. Please try again later.</p>
                     ) : commentsLoading ? (
                         <p>Loading comments...</p>
                     ) : comments && comments.length > 0 ? (
                         <div className="space-y-4 mb-6">
                             {comments.map((comment, index) => (
                                 <div key={index} className={`p-3 rounded-lg ${
-                                    comment.role === 'student' ? 'bg-gray-50 border border-gray-200' :
+                                    comment.role === 'student' ? 'bg-base-200 border border-base-300' :
                                     comment.role === 'advisor' ? 'bg-yellow-50 border border-yellow-200' :
                                     'bg-blue-50 border border-blue-200'
                                 }`}>
                                     <div className="flex justify-between mb-2">
                                         <span className="font-medium">
                                             {comment.author?.name || 'Unknown User'} 
-                                            <span className="text-xs ml-2 text-gray-500">
+                                            <span className="text-xs ml-2 text-base-content/60">
                                                 ({comment.role})
                                             </span>
                                         </span>
-                                        <span className="text-xs text-gray-500">
+                                        <span className="text-xs text-base-content/60">
                                             {formatDate(comment.createdAt)}
                                         </span>
+                                    </div>
+                                    <div className="flex items-center mb-2">
+                                        <UserAvatar user={comment.author} size="md" />
                                     </div>
                                     <p>{comment.text}</p>
                                 </div>
                             ))}
                         </div>
                     ) : (
-                        <p className="text-gray-500 italic mb-6">No comments yet. Start the discussion!</p>
+                        <p className="text-base-content/60 italic mb-6">No comments yet. Start the discussion!</p>
                     )}
                     
                     {/* Comment Form */}
                     <form onSubmit={handleCommentSubmit} className="mt-4">
-                        <div className="form-control">
+                        <div className="form-control flex items-center">
+                            <UserAvatar user={user} size="md" className="mr-4" />
                             <textarea
                                 className="textarea textarea-bordered w-full"
                                 rows="3"

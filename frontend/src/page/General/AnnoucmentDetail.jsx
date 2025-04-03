@@ -7,6 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import { formatDistanceToNow } from 'date-fns';
 import { ThumbsUp, ThumbsDown, Send, ArrowLeft, Loader } from 'lucide-react';
 import MediaDisplay from '@/components/MediaDisplay';
+import UserAvatar from '@/components/UserAvatar';
 
 function AnnouncementDetail() {
     const { id } = useParams();
@@ -60,15 +61,12 @@ function AnnouncementDetail() {
                 <div className="p-6">
                     <div className="flex items-start justify-between">
                         <div className="flex items-center space-x-3">
-                            <div className="avatar">
-                                <div className="w-12 h-12 rounded-full">
-                                    <img 
-                                        src={announcement.user?.profileImage || `https://avatar.iran.liara.run/username?username=${announcement.user?.name}`} 
-                                        alt={announcement.user?.name}
-                                        className="object-cover"
-                                    />
-                                </div>
-                            </div>
+                            <UserAvatar 
+                                user={announcement.user} 
+                                size="lg" 
+                                className="tooltip" 
+                                data-tip={announcement.user?.name}
+                            />
                             <div>
                                 <h3 className="font-bold text-lg">{announcement.user?.name}</h3>
                                 <div className="text-sm text-gray-500">
@@ -130,14 +128,12 @@ function AnnouncementDetail() {
                     
                     {/* Add comment */}
                     <div className="flex gap-3">
-                        <div className="avatar">
-                            <div className="w-10 h-10 rounded-full">
-                                <img
-                                    src={user?.profileImage || `https://avatar.iran.liara.run/username?username=${user?.name}`}
-                                    alt=""
-                                />
-                            </div>
-                        </div>
+                        <UserAvatar 
+                            user={user} 
+                            size="md" 
+                            className="tooltip" 
+                            data-tip={user?.name}
+                        />
                         <div className="flex-grow">
                             <div className="relative">
                                 <textarea
@@ -164,15 +160,12 @@ function AnnouncementDetail() {
                             <div key={pageIndex} className="space-y-6">
                                 {page.comments.map((comment) => (
                                     <div key={comment._id} className="flex gap-3">
-                                        <div className="avatar">
-                                            <div className="w-10 h-10 rounded-full">
-                                                <img
-                                                    src={comment.user?.profileImage || `https://avatar.iran.liara.run/username?username=${comment?.user?.name}`}
-                                                    alt={comment.user?.name || "User"}
-                                                    className="object-cover w-full h-full"
-                                                />
-                                            </div>
-                                        </div>
+                                        <UserAvatar 
+                                            user={comment.user} 
+                                            size="md" 
+                                            className="tooltip" 
+                                            data-tip={comment.user?.name}
+                                        />
                                         <div className="flex-grow bg-base-200 p-3 rounded-lg">
                                             <div className="flex justify-between items-start">
                                                 <p className="font-semibold">{comment.user.name}</p>
