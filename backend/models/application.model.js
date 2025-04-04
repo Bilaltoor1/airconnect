@@ -20,7 +20,10 @@ const applicationSchema = new mongoose.Schema({
     coordinator: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     advisorComments: { type: String, default: '' },
     coordinatorComments: { type: String, default: '' },
-    comments: [commentSchema]
+    comments: [commentSchema],
+    hiddenFromStudent: { type: Boolean, default: false },
+    hiddenFromAdvisor: { type: Boolean, default: false },
+    hiddenFromCoordinator: { type: Boolean, default: false }
 });
 
 const Application = mongoose.model('Application', applicationSchema);

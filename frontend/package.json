@@ -30,6 +30,7 @@
     "tailwind-merge": "^2.5.2",
     "tailwindcss-animate": "^1.0.7",
     "theme-change": "^2.5.0",
+    "web-push": "^3.6.7",
     "zod": "^3.23.8",
     "zustand": "^4.5.5"
   },

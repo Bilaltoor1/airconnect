@@ -57,7 +57,7 @@ app.use('/api/notifications', notificationRoutes)
 app.use('/api/debug', debugRoutes); // Add the debug routes
 
 // Start the server
-server.listen(3001, async () => {
+server.listen(process.env.PORT || 3001, async () => {
     console.log("Server running on port 3001")
     await connectToDB()
 })

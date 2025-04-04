@@ -1,26 +1,157 @@
-import { useHistoryofApplications } from '@/hooks/useApplication';
+import { useHistoryofApplications, useClearAdvisorApplicationHistory, useHideAdvisorApplication } from '@/hooks/useApplication';
 import { useAuth } from '@/context/AuthContext.jsx';
 import { getStatusColor } from '@/utils/applicationStatusColors';
 import { useNavigate } from 'react-router-dom';
+import { Trash2, ExternalLink, Check, Square, CheckSquare } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { useState } from 'react';
 
 const TeacherApplicationHistory = () => {
     const { user } = useAuth();
     const { data: applications = [], isLoading, error } = useHistoryofApplications({ advisor: user._id });
+    const clearHistory = useClearAdvisorApplicationHistory();
+    const hideApplication = useHideAdvisorApplication();
     const navigate = useNavigate();
+    
+    const [selectionMode, setSelectionMode] = useState(false);
+    const [selectedApplications, setSelectedApplications] = useState([]);
 
     if (isLoading) return <div className="flex justify-center items-center h-screen">Loading...</div>;
     if (error) return <div className="flex justify-center items-center h-screen">Error loading applications</div>;
 
     const handleClick = (id) => {
+        if (selectionMode) return;
         navigate(`/applications/${id}`);
+    };
+    
+    const handleClearHistory = () => {
+        if (window.confirm('Are you sure you want to clear your processed applications history? This cannot be undone.')) {
+            clearHistory.mutate(undefined, {
+                onSuccess: (data) => {
+                    toast.success(`Application history cleared. ${data.count} applications removed.`);
+                },
+                onError: () => {
+                    toast.error('Failed to clear application history');
+                }
+            });
+        }
+    };
+    
+    const handleDeleteApplication = (id, event) => {
+        if (event) event.stopPropagation();
+        
+        if (window.confirm('Are you sure you want to remove this application from your history?')) {
+            hideApplication.mutate(id, {
+                onSuccess: () => {
+                    toast.success('Application removed from your history');
+                },
+                onError: () => {
+                    toast.error('Failed to remove application');
+                }
+            });
+        }
+    };
+    
+    const toggleSelectionMode = () => {
+        setSelectionMode(!selectionMode);
+        setSelectedApplications([]);
+    };
+    
+    const toggleApplicationSelection = (id, event) => {
+        event.stopPropagation();
+        
+        if (selectedApplications.includes(id)) {
+            setSelectedApplications(selectedApplications.filter(appId => appId !== id));
+        } else {
+            setSelectedApplications([...selectedApplications, id]);
+        }
+    };
+    
+    const deleteSelectedApplications = () => {
+        if (selectedApplications.length === 0) {
+            toast.error('No applications selected');
+            return;
+        }
+        
+        if (window.confirm(`Are you sure you want to delete ${selectedApplications.length} selected application(s)?`)) {
+            const deletionPromises = selectedApplications.map(id => 
+                new Promise((resolve, reject) => {
+                    hideApplication.mutate(id, {
+                        onSuccess: () => resolve(),
+                        onError: () => reject()
+                    });
+                })
+            );
+            
+            Promise.allSettled(deletionPromises)
+                .then(results => {
+                    const successful = results.filter(r => r.status === 'fulfilled').length;
+                    
+                    if (successful === selectedApplications.length) {
+                        toast.success(`${successful} application(s) removed from your history`);
+                    } else {
+                        toast.success(`${successful} of ${selectedApplications.length} application(s) removed`);
+                    }
+                    
+                    setSelectedApplications([]);
+                    setSelectionMode(false);
+                });
+        }
     };
 
     return (
         <div className="mx-6 py-4">
-            <h1 className="text-2xl font-bold uppercase">Applications I've Processed</h1>
-            <p className="text-gray-500 mb-4">
-                Showing applications that you have reviewed or approved
-            </p>
+            <div className="flex justify-between items-center">
+                <div>
+                    <h1 className="text-2xl font-bold uppercase">Applications I've Processed</h1>
+                    <p className="text-gray-500 mb-4">
+                        Showing applications that you have reviewed or approved
+                    </p>
+                </div>
+                
+                {applications.length > 0 && (
+                    <div className="flex gap-2">
+                        {selectionMode ? (
+                            <>
+                                <button 
+                                    onClick={toggleSelectionMode}
+                                    className="btn btn-sm btn-outline"
+                                >
+                                    Cancel
+                                </button>
+                                
+                                {selectedApplications.length > 0 && (
+                                    <button 
+                                        onClick={deleteSelectedApplications}
+                                        className="btn btn-sm btn-error flex items-center gap-2"
+                                    >
+                                        <Trash2 size={16} />
+                                        Delete Selected ({selectedApplications.length})
+                                    </button>
+                                )}
+                            </>
+                        ) : (
+                            <>
+                                <button 
+                                    onClick={toggleSelectionMode}
+                                    className="btn btn-sm btn-outline flex items-center gap-2"
+                                >
+                                    <Check size={16} />
+                                    Select
+                                </button>
+                                
+                                <button 
+                                    onClick={handleClearHistory}
+                                    className="btn btn-sm btn-error flex items-center gap-2"
+                                >
+                                    <Trash2 size={16} />
+                                    Clear History
+                                </button>
+                            </>
+                        )}
+                    </div>
+                )}
+            </div>
             
             {applications.length === 0 ? (
                 <div className="p-6 bg-gray-50 rounded-lg text-center">
@@ -30,7 +161,22 @@ const TeacherApplicationHistory = () => {
                 <ul className='mt-6 grid xl:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-4'>
                     {applications.map((application) => (
                         <li key={application._id} 
-                            className={`p-5 rounded-xl shadow-md hover:shadow-lg transition-shadow ${getStatusColor(application.applicationStatus)}`}>
+                            className={`p-5 rounded-xl shadow-md hover:shadow-lg transition-shadow relative ${getStatusColor(application.applicationStatus)}`}
+                            onClick={() => handleClick(application._id)}>
+                            
+                            {selectionMode && (
+                                <button 
+                                    className="absolute top-2 right-2 p-1 rounded-full bg-white/70 hover:bg-white text-gray-600 hover:text-primary transition-colors"
+                                    onClick={(e) => toggleApplicationSelection(application._id, e)}
+                                    title="Select this application"
+                                >
+                                    {selectedApplications.includes(application._id) ? 
+                                        <CheckSquare size={18} className="text-primary" /> : 
+                                        <Square size={18} />
+                                    }
+                                </button>
+                            )}
+                            
                             <div>
                                 <div className="flex justify-between items-start mb-2">
                                     <h2 className="text-xl font-bold">{application.name}</h2>
@@ -60,11 +206,16 @@ const TeacherApplicationHistory = () => {
                                     </div>
                                 )}
                                 
-                                <div className="text-right">
+                                <div className="text-right mt-4">
                                     <button 
-                                        onClick={() => handleClick(application._id)}
-                                        className="btn btn-xs btn-primary"
+                                        className="btn btn-xs btn-primary flex items-center gap-1"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleClick(application._id);
+                                        }}
+                                        disabled={selectionMode}
                                     >
+                                        <ExternalLink size={12} />
                                         View Details
                                     </button>
                                 </div>

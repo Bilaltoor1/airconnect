@@ -6,7 +6,13 @@ import {
     updateApplicationByCoordinator,
     updateApplicationByStudent,
     addComment,
-    getApplicationComments
+    getApplicationComments,
+    clearStudentApplicationHistory,
+    clearAdvisorApplicationHistory,
+    clearCoordinatorApplicationHistory,
+    hideStudentApplication,
+    hideAdvisorApplication,
+    hideCoordinatorApplication
 } from '../controllers/application.controller.js';
 import { verifyToken } from '../middleware/verifyToken.js';
 import { checkCoordinator } from '../middleware/checkCoordinator.js';
@@ -21,4 +27,15 @@ router.get('/history', verifyToken, fetchHistoryofApplication);
 router.get('/:id', verifyToken, fetchApplicationById);
 router.post('/:id/comments', verifyToken, addComment);
 router.get('/:id/comments', verifyToken, getApplicationComments);
+
+// Routes for clearing application history
+router.delete('/history/student', verifyToken, clearStudentApplicationHistory);
+router.delete('/history/advisor', verifyToken, clearAdvisorApplicationHistory);
+router.delete('/history/coordinator', verifyToken, checkCoordinator, clearCoordinatorApplicationHistory);
+
+// Routes for hiding individual applications
+router.delete('/student/:id', verifyToken, hideStudentApplication);
+router.delete('/advisor/:id', verifyToken, hideAdvisorApplication);
+router.delete('/coordinator/:id', verifyToken, checkCoordinator, hideCoordinatorApplication);
+
 export default router;

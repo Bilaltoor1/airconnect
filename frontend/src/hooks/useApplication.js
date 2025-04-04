@@ -1,5 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from 'react-query';
-import { createApplication, fetchApplications, fetchHistoryofApplication, fetchApplicationById, updateApplicationByAdvisor, updateApplicationByCoordinator, updateApplicationByStudent, addApplicationComment, getApplicationComments } from '../api/application';
+import { 
+    createApplication, fetchApplications, fetchHistoryofApplication, 
+    fetchApplicationById, updateApplicationByAdvisor, 
+    updateApplicationByCoordinator, updateApplicationByStudent, 
+    addApplicationComment, getApplicationComments,
+    clearStudentApplicationHistory, clearAdvisorApplicationHistory,
+    clearCoordinatorApplicationHistory, hideStudentApplication,
+    hideAdvisorApplication, hideCoordinatorApplication
+} from '../api/application';
 
 export const useCreateApplication = () => {
     const queryClient = useQueryClient();
@@ -89,5 +97,77 @@ export const useApplicationComments = (id) => {
     return useQuery(['applicationComments', id], () => getApplicationComments(id), {
         enabled: !!id,
         cacheTime: 5000
+    });
+};
+
+export const useClearStudentApplicationHistory = () => {
+    const queryClient = useQueryClient();
+    return useMutation(clearStudentApplicationHistory, {
+        onSuccess: () => {
+            queryClient.invalidateQueries('historyofApplications');
+        },
+        onError: (error) => {
+            console.error('Failed to clear student application history:', error.response?.data || error.message);
+        }
+    });
+};
+
+export const useClearAdvisorApplicationHistory = () => {
+    const queryClient = useQueryClient();
+    return useMutation(clearAdvisorApplicationHistory, {
+        onSuccess: () => {
+            queryClient.invalidateQueries('historyofApplications');
+        },
+        onError: (error) => {
+            console.error('Failed to clear advisor application history:', error.response?.data || error.message);
+        }
+    });
+};
+
+export const useClearCoordinatorApplicationHistory = () => {
+    const queryClient = useQueryClient();
+    return useMutation(clearCoordinatorApplicationHistory, {
+        onSuccess: () => {
+            queryClient.invalidateQueries('historyofApplications');
+        },
+        onError: (error) => {
+            console.error('Failed to clear coordinator application history:', error.response?.data || error.message);
+        }
+    });
+};
+
+export const useHideStudentApplication = () => {
+    const queryClient = useQueryClient();
+    return useMutation(hideStudentApplication, {
+        onSuccess: () => {
+            queryClient.invalidateQueries('historyofApplications');
+        },
+        onError: (error) => {
+            console.error('Failed to hide student application:', error.response?.data || error.message);
+        }
+    });
+};
+
+export const useHideAdvisorApplication = () => {
+    const queryClient = useQueryClient();
+    return useMutation(hideAdvisorApplication, {
+        onSuccess: () => {
+            queryClient.invalidateQueries('historyofApplications');
+        },
+        onError: (error) => {
+            console.error('Failed to hide advisor application:', error.response?.data || error.message);
+        }
+    });
+};
+
+export const useHideCoordinatorApplication = () => {
+    const queryClient = useQueryClient();
+    return useMutation(hideCoordinatorApplication, {
+        onSuccess: () => {
+            queryClient.invalidateQueries('historyofApplications');
+        },
+        onError: (error) => {
+            console.error('Failed to hide coordinator application:', error.response?.data || error.message);
+        }
     });
 };

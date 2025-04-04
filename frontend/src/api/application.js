@@ -46,3 +46,33 @@ export const getApplicationComments = async (id) => {
     const response = await axios.get(`${API_URL}/${id}/comments`);
     return response.data;
 };
+
+export const clearStudentApplicationHistory = async () => {
+    const response = await axios.delete(`${API_URL}/history/student`);
+    return response.data;
+};
+
+export const clearAdvisorApplicationHistory = async () => {
+    const response = await axios.delete(`${API_URL}/history/advisor`);
+    return response.data;
+};
+
+export const clearCoordinatorApplicationHistory = async () => {
+    const response = await axios.delete(`${API_URL}/history/coordinator`);
+    return response.data;
+};
+
+export const hideStudentApplication = async (id) => {
+    const response = await axios.delete(`${API_URL}/student/${id}`);
+    return response.data;
+};
+
+export const hideAdvisorApplication = async (id) => {
+    const response = await axios.delete(`${API_URL}/advisor/${id}`);
+    return response.data;
+};
+
+export const hideCoordinatorApplication = async (id) => {
+    const response = await axios.delete(`${API_URL}/coordinator/${id}`);
+    return response.data;
+};
