@@ -101,6 +101,13 @@ export const createJobNotification = async (job, creator) => {
 // Create notification for application submission (student to advisor)
 export const createApplicationSubmittedNotification = async (application, student) => {
     try {
+        console.log('APPLICATION SUBMISSION NOTIFICATION:', {
+            applicationId: application._id,
+            studentId: student?._id,
+            advisorId: application.advisor,
+            hasAdvisor: !!application.advisor
+        });
+        
         if (!application.advisor) {
             console.log("No advisor found for application");
             return false;
@@ -116,6 +123,7 @@ export const createApplicationSubmittedNotification = async (application, studen
             relatedId: application._id,
         });
         
+        console.log('Application submission notification created:', !!notification);
         return !!notification;
     } catch (error) {
         console.error('Error creating application submission notification:', error);
@@ -126,27 +134,85 @@ export const createApplicationSubmittedNotification = async (application, studen
 // Create notification for advisor action (to student and coordinator)
 export const createAdvisorActionNotification = async (application, advisor) => {
     try {
+        console.log('ADVISOR ACTION NOTIFICATION:', {
+            applicationId: application?._id,
+            advisorId: advisor?._id,
+            studentId: application?.student,
+            coordinatorId: application?.coordinator,
+            advisorStatus: application?.advisorStatus,
+            applicationStatus: application?.applicationStatus,
+            applicationFields: Object.keys(application || {})
+        });
+        
         const notifications = [];
-        const status = application.advisorStatus;
-        const statusText = status === 'approved' ? 'approved' : 'rejected';
+        
+        // Get the status from application, with fallbacks for different field names
+        let status;
+        if (application.advisorStatus) {
+            status = application.advisorStatus;
+        } else if (application.applicationStatus) {
+            status = application.applicationStatus;
+        } else if (application.status) {
+            status = application.status;
+        } else {
+            status = 'unknown';
+        }
+        
+        console.log('Determined advisor action status:', status);
+        
+        // Standardize status to lowercase for consistent comparison
+        const statusLower = typeof status === 'string' ? status.toLowerCase() : 'unknown';
+        
+        // Determine the appropriate status text based on actual status
+        let statusText;
+        let titleText;
+        
+        if (statusLower.includes('approve') || statusLower === 'forwarded') {
+            statusText = 'approved';
+            titleText = 'Approved';
+        } else if (statusLower.includes('reject')) {
+            statusText = 'rejected';
+            titleText = 'Rejected';
+        } else if (statusLower.includes('change') || statusLower.includes('request')) {
+            statusText = 'returned with requested changes';
+            titleText = 'Changes Requested';
+        } else if (statusLower.includes('transit') || statusLower.includes('in_transit')) {
+            statusText = 'moved to in-transit status';
+            titleText = 'In Transit';
+        } else {
+            statusText = statusLower;
+            titleText = status.charAt(0).toUpperCase() + statusLower.slice(1);
+        }
+        
+        console.log('Advisor notification text determined:', { statusText, titleText });
+        
+        // Make sure we have a valid student ID
+        const studentId = application.student || application.studentID;
+        if (!studentId) {
+            console.error('No student ID found in application');
+            return false;
+        }
         
         // Notify the student about the advisor's decision
         notifications.push(
             createNotification({
-                recipient: application.student,
+                recipient: studentId,
                 sender: advisor._id,
                 type: 'application_advisor_action',
-                title: `Application ${statusText.charAt(0).toUpperCase() + statusText.slice(1)} by Advisor`,
+                title: `Application ${titleText} by Advisor`,
                 message: `Your application has been ${statusText} by advisor ${advisor.name}`,
                 relatedId: application._id,
             })
         );
         
-        // If approved, notify coordinator that action is needed
-        if (status === 'approved' && application.coordinator) {
+        // If approved or in transit, notify coordinator that action is needed
+        if ((statusLower.includes('approve') || statusLower.includes('transit')) && 
+            (application.coordinator || application.coordinatorID)) {
+            const coordinatorId = application.coordinator || application.coordinatorID;
+            
             notifications.push(
                 createNotification({
-                    recipient: application.coordinator,
+                    recipient: coordinatorId,
                     sender: advisor._id,
                     type: 'application_advisor_action',
                     title: 'Application Needs Review',
@@ -156,8 +222,9 @@ export const createAdvisorActionNotification = async (application, advisor) => {
             );
         }
         
-        await Promise.all(notifications);
-        return true;
+        const results = await Promise.all(notifications);
+        console.log('Advisor notification results:', results.map(r => !!r));
+        return results.every(Boolean);
     } catch (error) {
         console.error('Error creating advisor action notification:', error);
         return false;
@@ -167,38 +234,90 @@ export const createAdvisorActionNotification = async (application, advisor) => {
 // Create notification for coordinator action (to student and advisor)
 export const createCoordinatorActionNotification = async (application, coordinator) => {
     try {
+        console.log('COORDINATOR ACTION NOTIFICATION:', {
+            applicationId: application?._id,
+            coordinatorId: coordinator?._id,
+            studentId: application?.student || application?.studentID,
+            advisorId: application?.advisor || application?.advisorID,
+            applicationStatus: application?.applicationStatus,
+            status: application?.status,
+            applicationFields: Object.keys(application || {})
+        });
+        
         const notifications = [];
-        const status = application.status;
-        const statusText = status === 'approved' ? 'approved' : 'rejected';
+        
+        // Get the status from application, with fallbacks for different field names
+        let status;
+        if (application.applicationStatus) {
+            status = application.applicationStatus;
+        } else if (application.status) {
+            status = application.status;
+        } else {
+            status = 'unknown';
+        }
+        
+        console.log('Determined coordinator action status:', status);
+        
+        // Standardize status to lowercase for consistent comparison
+        const statusLower = typeof status === 'string' ? status.toLowerCase() : 'unknown';
+        
+        // Determine the appropriate status text based on actual status
+        let statusText;
+        let titleText;
+        
+        if (statusLower.includes('approve') || statusLower === 'forwarded') {
+            statusText = 'approved';
+            titleText = 'Approved';
+        } else if (statusLower.includes('reject')) {
+            statusText = 'rejected';
+            titleText = 'Rejected';
+        } else if (statusLower.includes('change') || statusLower.includes('request')) {
+            statusText = 'returned with requested changes';
+            titleText = 'Changes Requested';
+        } else {
+            statusText = statusLower;
+            titleText = status.charAt(0).toUpperCase() + statusLower.slice(1);
+        }
+        
+        console.log('Coordinator notification text determined:', { statusText, titleText });
+        
+        // Make sure we have a valid student ID
+        const studentId = application.student || application.studentID;
+        if (!studentId) {
+            console.error('No student ID found in application');
+            return false;
+        }
         
         // Notify the student about the final decision
         notifications.push(
             createNotification({
-                recipient: application.student,
+                recipient: studentId,
                 sender: coordinator._id,
                 type: 'application_coordinator_action',
-                title: `Application ${statusText.charAt(0).toUpperCase() + statusText.slice(1)}`,
+                title: `Application ${titleText}`,
                 message: `Your application has been ${statusText} by coordinator ${coordinator.name}`,
                 relatedId: application._id,
             })
         );
         
         // Notify the advisor about the final decision
-        if (application.advisor) {
+        const advisorId = application.advisor || application.advisorID;
+        if (advisorId) {
             notifications.push(
                 createNotification({
-                    recipient: application.advisor,
+                    recipient: advisorId,
                     sender: coordinator._id,
                     type: 'application_coordinator_action',
-                    title: `Application ${statusText.charAt(0).toUpperCase() + statusText.slice(1)}`,
+                    title: `Application ${titleText}`,
                     message: `An application you reviewed has been ${statusText} by coordinator ${coordinator.name}`,
                     relatedId: application._id,
                 })
             );
         }
         
-        await Promise.all(notifications);
-        return true;
+        const results = await Promise.all(notifications);
+        console.log('Coordinator notification results:', results.map(r => !!r));
+        return results.every(Boolean);
     } catch (error) {
         console.error('Error creating coordinator action notification:', error);
         return false;
