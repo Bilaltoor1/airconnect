@@ -4,7 +4,8 @@ import {
     getNotifications, 
     markAsRead, 
     markAllAsRead, 
-    deleteNotification 
+    deleteNotification,
+    clearAllNotifications 
 } from '../controllers/notification.controller.js';
 import { verifyToken } from '../middleware/verifyToken.js';
 
@@ -13,6 +14,7 @@ const router = express.Router();
 router.get('/', verifyToken, getNotifications);
 router.patch('/:id/read', verifyToken, markAsRead);
 router.patch('/read-all', verifyToken, markAllAsRead);
+router.delete('/clear-all', verifyToken, clearAllNotifications);
 router.delete('/:id', verifyToken, deleteNotification);
 
 // Debug route to check token validity - useful for troubleshooting

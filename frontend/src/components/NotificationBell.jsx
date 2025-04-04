@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Bell } from 'lucide-react';
+import { Bell, Trash2 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useNotifications } from '../context/NotificationContext';
 import { format } from 'date-fns';
@@ -12,7 +12,8 @@ const NotificationBell = () => {
         unreadCount, 
         markAsRead, 
         markAllAsRead,
-        deleteNotification
+        deleteNotification,
+        clearAllNotifications
     } = useNotifications();
     
     const toggleNotifications = () => {
@@ -29,6 +30,10 @@ const NotificationBell = () => {
     
     const handleClearAll = () => {
         markAllAsRead();
+    };
+    
+    const handleClearAllNotifications = () => {
+        clearAllNotifications();
     };
     
     const getNotificationLink = (notification) => {
@@ -91,12 +96,21 @@ const NotificationBell = () => {
                         <div className="p-4 border-b flex justify-between items-center">
                             <h3 className="font-semibold">Notifications</h3>
                             {notifications.length > 0 && (
-                                <button 
-                                    className="text-xs text-blue-500 hover:text-blue-700"
-                                    onClick={handleClearAll}
-                                >
-                                    Mark all as read
-                                </button>
+                                <div className="flex gap-2">
+                                    <button 
+                                        className="text-xs text-blue-500 hover:text-blue-700"
+                                        onClick={handleClearAll}
+                                    >
+                                        Mark all as read
+                                    </button>
+                                    <button 
+                                        className="text-xs text-red-500 hover:text-red-700 flex items-center"
+                                        onClick={handleClearAllNotifications}
+                                    >
+                                        <Trash2 size={12} className="mr-1" />
+                                        Clear all
+                                    </button>
+                                </div>
                             )}
                         </div>
                         

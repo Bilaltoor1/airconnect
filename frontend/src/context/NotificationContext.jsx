@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
-import { fetchNotifications, markAsRead, markAllAsRead, deleteNotification } from '../api/notification';
+import { fetchNotifications, markAsRead, markAllAsRead, deleteNotification, clearAllNotifications } from '../api/notification';
 import { useAuth } from './AuthContext';
 import { getSocket, getSocketStatus } from '../services/socket.service';
 import { toast } from 'react-hot-toast';
@@ -135,6 +135,15 @@ export const NotificationProvider = ({ children }) => {
             queryClient.invalidateQueries(['notifications']);
         }
     });
+
+    // Clear all notifications
+    const clearAllNotificationsMutation = useMutation(clearAllNotifications, {
+        onSuccess: () => {
+            queryClient.invalidateQueries(['notifications']);
+            setUnreadCount(0);
+            toast.success('All notifications cleared');
+        }
+    });
     
     const value = {
         notifications: data?.notifications || [],
@@ -144,7 +153,8 @@ export const NotificationProvider = ({ children }) => {
         refetch,
         markAsRead: (id) => markNotificationAsRead.mutate(id),
         markAllAsRead: () => markAllNotificationsAsRead.mutate(),
-        deleteNotification: (id) => deleteNotificationMutation.mutate(id)
+        deleteNotification: (id) => deleteNotificationMutation.mutate(id),
+        clearAllNotifications: () => clearAllNotificationsMutation.mutate()
     };
     
     return (

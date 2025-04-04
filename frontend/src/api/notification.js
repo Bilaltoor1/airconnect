@@ -26,3 +26,8 @@ export const deleteNotification = async (id) => {
     const response = await axios.delete(`${API_URL}/${id}`);
     return response.data;
 };
+
+export const clearAllNotifications = async () => {
+    const response = await axios.delete(`${API_URL}/clear-all`);
+    return response.data;
+};
