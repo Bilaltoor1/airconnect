@@ -17,7 +17,15 @@ const announcementSchema = new Schema({
         type: String,
         enum: ['teacher', 'coordinator', 'student', 'student-affairs'],
         required: true
-    }
+    },
+    restrictToTeacherBatches: {
+        type: Boolean,
+        default: false
+    },
+    teacherBatches: [{
+        type: Schema.Types.ObjectId,
+        ref: 'Batch'
+    }]
 }, {
     timestamps: true
 });

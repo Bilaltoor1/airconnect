@@ -10,6 +10,7 @@ const AnnouncementFilter = ({ filters, setFilters }) => {
     const { data: sections, isLoading: sectionsLoading } = useAnnouncementsFilter();
     const { data: batches, isLoading: batchesLoading } = useBatchFilter();
     const [selectedBatch, setSelectedBatch] = useState('');
+    const [filteredBatches, setFilteredBatches] = useState([]);
 
     useEffect(() => {
         if (user.role === 'student' && batches?.length > 0) {
@@ -19,6 +20,18 @@ const AnnouncementFilter = ({ filters, setFilters }) => {
             }
         }
     }, [user, batches]);
+
+    // Filter batches based on selected section
+    useEffect(() => {
+        if (!batchesLoading && batches) {
+            if (filters.section && filters.section !== 'all') {
+                const filtered = batches.filter(batch => batch.section === filters.section);
+                setFilteredBatches(filtered);
+            } else {
+                setFilteredBatches(batches);
+            }
+        }
+    }, [filters.section, batches, batchesLoading]);
 
     const toggleFilter = () => {
         setIsOpen(!isOpen);
@@ -30,6 +43,9 @@ const AnnouncementFilter = ({ filters, setFilters }) => {
 
     const handleSectionChange = (e) => {
         setFilters({...filters, section: e.target.value});
+        // Reset batch selection when section changes
+        setFilters(prev => ({...prev, batch: ''}));
+        setSelectedBatch('');
     };
 
     const handleRoleChange = (e) => {
@@ -134,7 +150,7 @@ const AnnouncementFilter = ({ filters, setFilters }) => {
                                     disabled={batchesLoading}
                                 >
                                     <option value="">All Batches</option>
-                                    {!batchesLoading && batches?.map((batch) => (
+                                    {!batchesLoading && filteredBatches?.map((batch) => (
                                         <option key={batch._id} value={batch.name}>
                                             {batch.name}
                                         </option>

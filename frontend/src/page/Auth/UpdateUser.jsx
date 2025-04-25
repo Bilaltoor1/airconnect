@@ -25,6 +25,7 @@ const UpdateUser = () => {
     const { data: sectionsData, isLoading: sectionsLoading } = useAllAnnouncementsFilter();
     const { data: batchesData, isLoading: batchesLoading } = useBatches();
     const fileInputRef = useRef(null);
+    const [filteredBatches, setFilteredBatches] = useState([]);
 
     const [formData, setFormData] = useState({
         userId: user?._id || '',
@@ -46,6 +47,34 @@ const UpdateUser = () => {
         }
     }, [user, navigate]);
 
+    useEffect(() => {
+        if (!batchesLoading && batchesData) {
+            if (formData.section) {
+                const exactSectionMatches = batchesData.filter(batch => 
+                    batch.section && batch.section === formData.section
+                );
+                
+                if (exactSectionMatches.length > 0) {
+                    setFilteredBatches(exactSectionMatches);
+                } else {
+                    const sectionPrefix = formData.section.toLowerCase().split(' ')[0];
+                    const nameBasedMatches = batchesData.filter(batch => 
+                        batch.name.toLowerCase().includes(sectionPrefix)
+                    );
+                    setFilteredBatches(nameBasedMatches);
+                }
+            } else {
+                setFilteredBatches(batchesData);
+            }
+        }
+    }, [formData.section, batchesData, batchesLoading]);
+
+    useEffect(() => {
+        if (formData.section !== user?.section) {
+            setFormData(prev => ({ ...prev, batchId: '' }));
+        }
+    }, [formData.section, user?.section]);
+
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
@@ -54,7 +83,6 @@ const UpdateUser = () => {
         const file = e.target.files[0];
         if (!file) return;
 
-        // Validate file type
         if (!file.type.startsWith('image/')) {
             toast.error('Please select an image file');
             if (fileInputRef.current) {
@@ -63,7 +91,6 @@ const UpdateUser = () => {
             return;
         }
 
-        // Validate file size (5MB max)
         if (file.size > 5 * 1024 * 1024) {
             toast.error('Image size must be less than 5MB');
             if (fileInputRef.current) {
@@ -72,14 +99,12 @@ const UpdateUser = () => {
             return;
         }
 
-        // Preview the image
         const reader = new FileReader();
         reader.onloadend = () => {
             setPreviewImage(reader.result);
         };
         reader.readAsDataURL(file);
 
-        // Store the file for upload
         setProfileImage(file);
         console.log('Profile image selected:', file.name, 'Size:', Math.round(file.size / 1024), 'KB');
     };
@@ -95,15 +120,12 @@ const UpdateUser = () => {
     const handleSubmit = (e) => {
         e.preventDefault();
         
-        // Create FormData object for proper file upload
         const formDataObj = new FormData();
         
-        // Add user ID and basic info
         formDataObj.append('userId', user._id);
         formDataObj.append('name', formData.name);
         formDataObj.append('email', formData.email);
         
-        // Add role-specific fields
         if (user.role === 'student') {
             formDataObj.append('section', formData.section);
             formDataObj.append('rollNo', formData.rollNo);
@@ -112,7 +134,6 @@ const UpdateUser = () => {
             formDataObj.append('section', formData.section);
         }
         
-        // Validation
         let isValid = true;
         let validationErrors = {};
         
@@ -139,13 +160,11 @@ const UpdateUser = () => {
             return;
         }
         
-        // Add profile image if changed
         if (profileImage) {
             console.log('Adding profile image to form data:', profileImage.name);
             formDataObj.append('profileImage', profileImage);
         }
         
-        // Debug log to verify data
         const logObj = {};
         formDataObj.forEach((value, key) => {
             logObj[key] = value instanceof File ? `File: ${value.name} (${Math.round(value.size/1024)}KB)` : value;
@@ -173,7 +192,6 @@ const UpdateUser = () => {
         <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-base-100 to-base-200">
             <div className="w-full max-w-5xl bg-base-100 rounded-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] overflow-hidden border border-gray-100 dark:border-gray-800">
                 <div className="grid md:grid-cols-2 grid-cols-1">
-                    {/* Form Section */}
                     <div className="p-8 md:p-10 bg-base-100">
                         <div className="mb-10">
                             <h2 className="text-3xl font-bold mb-2 text-center bg-gradient-to-r from-green-400 to-emerald-500 text-transparent bg-clip-text">
@@ -182,7 +200,6 @@ const UpdateUser = () => {
                             <p className="text-center text-gray-500 dark:text-gray-400">Keep your information current and accurate</p>
                         </div>
 
-                        {/* Profile Image Upload */}
                         <div className="flex flex-col items-center mb-8">
                             <div className="relative">
                                 <div className={`w-32 h-32 rounded-full overflow-hidden flex items-center justify-center border-2 ${previewImage ? 'border-green-500' : 'border-gray-300 bg-gray-100 dark:bg-gray-700'}`}>
@@ -315,10 +332,11 @@ const UpdateUser = () => {
                                                     value={formData.batchId}
                                                     onChange={handleChange}
                                                 >
+                                                    <option value="">Select Batch</option>
                                                     {batchesLoading ? (
                                                         <option>Loading...</option>
                                                     ) : (
-                                                        batchesData.map((batch) => (
+                                                        filteredBatches.map((batch) => (
                                                             <option key={batch._id} value={batch._id}>
                                                                 {batch.name}
                                                             </option>
@@ -393,7 +411,6 @@ const UpdateUser = () => {
                         </form>
                     </div>
 
-                    {/* Image Section */}
                     <div className="hidden md:block relative">
                         <img 
                             src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=1000&auto=format&fit=crop" 

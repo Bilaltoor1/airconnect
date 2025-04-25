@@ -15,49 +15,76 @@ const CreatePost = () => {
     const [media, setMedia] = useState([]);
     const [section, setSection] = useState(user.section || 'all');
     const [batchId, setBatchId] = useState('');
+    const [restrictToTeacherBatches, setRestrictToTeacherBatches] = useState(user.role === 'teacher');
     const [selectedFiles, setSelectedFiles] = useState([]);
     const [filesPreviews, setFilesPreviews] = useState([]);
     const [teacherSections, setTeacherSections] = useState([]);
+    const [filteredBatches, setFilteredBatches] = useState([]);
 
     // Extract teacher sections from batches
     useEffect(() => {
         if (user.role === 'teacher' && batchesData && batchesData.length > 0) {
-            // Extract unique sections from batch names (assuming format like "SE-Fall-21")
             const sections = new Set();
-            
-            // Always include the teacher's own section if it exists
             if (user.section) {
                 sections.add(user.section);
             }
-            
-            // Extract section codes from batch names
             batchesData.forEach(batch => {
                 const batchParts = batch.name.split('-');
                 if (batchParts.length > 0) {
                     sections.add(batchParts[0]);
                 }
             });
-            
             setTeacherSections(Array.from(sections));
         }
     }, [batchesData, user.role, user.section]);
 
-    // Filter sections based on user role
     const getFilteredSections = () => {
         if (!sectionsData) return [];
-        
-        // Coordinators see all sections
         if (user.role === 'coordinator') return sectionsData;
-        
-        // Teachers see only sections they teach plus 'all'
         if (user.role === 'teacher') {
             return sectionsData.filter(s => 
-                s.section === 'all' || teacherSections.includes(s.section)
+                teacherSections.includes(s.section)
             );
         }
-        
         return sectionsData;
     };
+
+    useEffect(() => {
+        if (user.role === 'teacher') {
+            if (user.section) {
+                setSection(user.section);
+            } else if (teacherSections.length > 0) {
+                setSection(teacherSections[0]);
+            } else {
+                setSection('');
+            }
+        }
+    }, [teacherSections, user.role, user.section]);
+
+    useEffect(() => {
+        if (!batchesLoading && batchesData) {
+            if (section && section !== 'all') {
+                const exactSectionMatches = batchesData.filter(batch => 
+                    batch.section && batch.section === section
+                );
+                if (exactSectionMatches.length > 0) {
+                    setFilteredBatches(exactSectionMatches);
+                } else {
+                    const sectionPrefix = section.toLowerCase().split(' ')[0];
+                    const nameBasedMatches = batchesData.filter(batch => 
+                        batch.name.toLowerCase().includes(sectionPrefix)
+                    );
+                    setFilteredBatches(nameBasedMatches);
+                }
+            } else {
+                setFilteredBatches(batchesData);
+            }
+        }
+    }, [section, batchesData, batchesLoading]);
+
+    useEffect(() => {
+        setBatchId('');
+    }, [section]);
 
     const getFileIcon = (fileType) => {
         if (fileType.includes('image')) return '🖼️';
@@ -71,30 +98,27 @@ const CreatePost = () => {
     const handleFileChange = (e) => {
         const fileList = Array.from(e.target.files);
         setMedia(e.target.files);
-        
-        // Generate previews for image files and icons for other file types
         const previews = fileList.map(file => {
             if (file.type.includes('image')) {
                 return {
                     type: 'image',
                     url: URL.createObjectURL(file),
                     name: file.name,
-                    size: (file.size / 1024).toFixed(2) // KB
+                    size: (file.size / 1024).toFixed(2)
                 };
             } else {
                 return {
                     type: 'file',
                     icon: getFileIcon(file.type),
                     name: file.name,
-                    size: (file.size / 1024).toFixed(2) // KB
+                    size: (file.size / 1024).toFixed(2)
                 };
             }
         });
-        
         setFilesPreviews(previews);
         setSelectedFiles(fileList.map(file => ({
             name: file.name,
-            size: (file.size / 1024).toFixed(2) // Convert to KB
+            size: (file.size / 1024).toFixed(2)
         })));
     };
 
@@ -102,11 +126,9 @@ const CreatePost = () => {
         const newSelectedFiles = [...selectedFiles];
         newSelectedFiles.splice(index, 1);
         setSelectedFiles(newSelectedFiles);
-        
         const newPreviews = [...filesPreviews];
         newPreviews.splice(index, 1);
         setFilesPreviews(newPreviews);
-        
         const dataTransfer = new DataTransfer();
         Array.from(media).forEach((file, i) => {
             if (i !== index) {
@@ -124,8 +146,11 @@ const CreatePost = () => {
         if (batchId) {
             formData.append('batchId', batchId);
         }
+        if (user.role === 'teacher' && !batchId && restrictToTeacherBatches) {
+            formData.append('restrictToTeacherBatches', 'true');
+        }
         for (let i = 0; i < media.length; i++) {
-            formData.append('files', media[i]); // Changed from 'media' to 'files'
+            formData.append('files', media[i]);
         }
 
         createAnnouncement(formData, {
@@ -187,8 +212,12 @@ const CreatePost = () => {
                                 className="select select-bordered w-full focus:ring-2 focus:ring-green-500"
                                 value={section}
                                 onChange={(e) => setSection(e.target.value)}
+                                required
                             >
-                                <option value="all">All Sections</option>
+                                {user.role === 'coordinator' && <option value="all">All Sections</option>}
+                                {user.role === 'teacher' && teacherSections.length === 0 && (
+                                    <option value="" disabled>No sections available</option>
+                                )}
                                 {sectionsLoading ? (
                                     <option>Loading...</option>
                                 ) : (
@@ -215,7 +244,7 @@ const CreatePost = () => {
                                 {batchesLoading ? (
                                     <option>Loading batches...</option>
                                 ) : (
-                                    batchesData?.map((batch) => (
+                                    filteredBatches?.map((batch) => (
                                         <option key={batch._id} value={batch._id}>
                                             {batch.name}
                                         </option>
@@ -224,6 +253,25 @@ const CreatePost = () => {
                             </select>
                         </div>
                     </div>
+                    
+                    {user.role === 'teacher' && !batchId && (
+                        <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                            <label className="flex items-center cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    className="checkbox checkbox-primary mr-2"
+                                    checked={restrictToTeacherBatches}
+                                    onChange={(e) => setRestrictToTeacherBatches(e.target.checked)}
+                                />
+                                <span className="text-sm text-blue-700">
+                                    Only show this announcement to students in batches I teach
+                                </span>
+                            </label>
+                            <p className="text-xs text-blue-500 mt-1 ml-6">
+                                When checked, this announcement will only be visible to students in your batches
+                            </p>
+                        </div>
+                    )}
                     
                     {selectedFiles.length > 0 && (
                         <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">

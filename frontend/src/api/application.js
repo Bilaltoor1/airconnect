@@ -5,9 +5,26 @@ const API_URL = import.meta.env.MODE === "development" ? "http://localhost:3001/
 axios.defaults.withCredentials = true;
 
 export const createApplication = async (applicationData) => {
-    const response = await axios.post(`${API_URL}`, applicationData);
-    return response.data;
+    try {
+        // Configure headers for handling FormData with files
+        const config = {
+            headers: {}
+        };
+        
+        // If applicationData is FormData, don't set Content-Type
+        // Let the browser set it automatically with the correct boundary
+        if (!(applicationData instanceof FormData)) {
+            config.headers['Content-Type'] = 'application/json';
+        }
+        
+        const response = await axios.post(`${API_URL}`, applicationData, config);
+        return response.data;
+    } catch (error) {
+        console.error('Error in createApplication:', error);
+        throw error;
+    }
 };
+
 export const fetchHistoryofApplication = async (params) => {
     const response = await axios.get(`${API_URL}/history`, {params});
     return response.data;

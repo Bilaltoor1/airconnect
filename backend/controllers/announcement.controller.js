@@ -88,6 +88,9 @@ export const getAnnouncements = async (req, res) => {
             const studentBatch = await Batch.findOne({ students: req.user._id });
             const batchName = studentBatch ? studentBatch.name : null;
             const batchId = studentBatch ? studentBatch._id : null;
+            
+            // Get the IDs of teachers who teach this student's batch
+            const teachersOfStudentBatch = studentBatch ? studentBatch.teachers : [];
 
             query.$or = [
                 // 1. Coordinator announcements with section='all'
@@ -98,6 +101,9 @@ export const getAnnouncements = async (req, res) => {
                     ]
                 },
                 // 2. Announcements matching student's section with no batch specified
+                // BUT only if either:
+                // a) not teacher-restricted, OR 
+                // b) created by a teacher who teaches this student
                 {
                     $and: [
                         { section: user.section },
@@ -106,6 +112,20 @@ export const getAnnouncements = async (req, res) => {
                                 { batch: null },
                                 { batch: { $exists: false } },
                                 { batchName: { $exists: false } }
+                            ]
+                        },
+                        {
+                            $or: [
+                                // Not a teacher-restricted announcement
+                                { restrictToTeacherBatches: { $ne: true } },
+                                // OR a teacher-restricted announcement from a teacher of this student
+                                { 
+                                    $and: [
+                                        { restrictToTeacherBatches: true },
+                                        { user: { $in: teachersOfStudentBatch } },
+                                        { createdByRole: 'teacher' }
+                                    ]
+                                }
                             ]
                         }
                     ]
@@ -122,6 +142,30 @@ export const getAnnouncements = async (req, res) => {
                     ]
                 }
             ];
+
+            // If there's a teacher-restricted announcement
+            if (query.$or) {
+                // Filter the OR conditions
+                query.$or = query.$or.filter(condition => {
+                    // If this is a section-specific condition with potential teacher restriction
+                    if (condition.$and && 
+                        condition.$and.some(c => c.section === req.user.section) &&
+                        !condition.$and.some(c => c.batch || c.batchName)) {
+                        condition.$and.push({
+                            $or: [
+                                { restrictToTeacherBatches: { $ne: true } },
+                                { 
+                                    $and: [
+                                        { restrictToTeacherBatches: true },
+                                        { user: { $in: studentBatch ? studentBatch.teachers : [] } }
+                                    ]
+                                }
+                            ]
+                        });
+                    }
+                    return true;
+                });
+            }
 
             // If filtering by specific batch
             if (batch) {
@@ -264,7 +308,7 @@ export const createAnnouncement = async (req, res) => {
             return res.status(403).json({ message: 'You do not have permission to perform this action' });
         }
 
-        const { description, section, batchId } = req.body;
+        const { description, section, batchId, restrictToTeacherBatches } = req.body;
         let batchName;
 
         if (batchId) {
@@ -296,15 +340,34 @@ export const createAnnouncement = async (req, res) => {
         const uploadResults = await Promise.all(uploadPromises);
         const mediaUrls = uploadResults.map(upload => upload.secure_url);
 
-        const newAnnouncement = new Announcement({
+        const announcementData = {
             description,
             section,
-            batch: batchId,
-            batchName,
             user: req.user._id,
-            createdByRole: req.user.role, // Add this missing field
+            createdByRole: req.user.role,
             media: mediaUrls // Store the URLs in the media array
-        });
+        };
+
+        // Add batch if specified
+        if (batchId && batchName) {
+            announcementData.batch = batchId;
+            announcementData.batchName = batchName;
+        }
+
+        // Add the teacher restriction flag
+        if (req.user.role === 'teacher' && restrictToTeacherBatches === 'true' && !batchId) {
+            // Get the batches this teacher teaches
+            const teacherBatches = await Batch.find({ teachers: req.user._id }).select('_id');
+            
+            // For debugging
+            console.log(`Teacher ${req.user._id} teaches ${teacherBatches.length} batches`);
+            
+            announcementData.restrictToTeacherBatches = true;
+            // Store the list of batch IDs this teacher is teaching (for faster filtering)
+            announcementData.teacherBatches = teacherBatches.map(batch => batch._id);
+        }
+
+        const newAnnouncement = new Announcement(announcementData);
 
         await newAnnouncement.save();
 

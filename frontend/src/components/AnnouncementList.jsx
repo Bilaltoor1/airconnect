@@ -4,8 +4,7 @@ import { formatDistanceToNow } from 'date-fns';
 import AnnouncementBadges from './AnnouncementBadges';
 import AnnouncementActions from './AnnouncementActions';
 import { MessageSquare, ChevronDown, ChevronUp, ThumbsUp, ThumbsDown } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useLikeAnnouncement, useDislikeAnnouncement } from '../hooks/useAnnouncement';
 import MediaDisplay from './MediaDisplay';
 import UserAvatar from './UserAvatar';
@@ -28,6 +27,7 @@ const AnnouncementItem = ({ announcement }) => {
   const { user } = useAuth();
   const { mutate: likeAnnouncement } = useLikeAnnouncement();
   const { mutate: dislikeAnnouncement } = useDislikeAnnouncement();
+  const navigate = useNavigate();
   
   // Check if current user is the creator
   const isCreator = announcement?.user?._id === user?._id;
@@ -36,8 +36,14 @@ const AnnouncementItem = ({ announcement }) => {
   const hasLiked = announcement.likes?.includes(user?._id);
   const hasDisliked = announcement.dislikes?.includes(user?._id);
   
-  // Toggle expanded state
-  const toggleExpanded = () => setExpanded(!expanded);
+  // Toggle expanded state or navigate to details page
+  const toggleExpanded = () => {
+    if (expanded) {
+      setExpanded(false);
+    } else {
+      navigate(`/announcement/${announcement._id}`);
+    }
+  };
   
   // Handle like/dislike
   const handleLike = (e) => {
@@ -113,7 +119,7 @@ const AnnouncementItem = ({ announcement }) => {
             </Link>
           </div>
           
-          {/* More details button */}
+          {/* More details button - now navigates directly to details page */}
           <button 
             className="flex items-center text-sm text-green-600 hover:text-green-700 transition-colors"
             onClick={toggleExpanded}
@@ -137,27 +143,6 @@ const AnnouncementItem = ({ announcement }) => {
           <button id={`edit-announcement-${announcement._id}`}></button>
           <button id={`delete-announcement-${announcement._id}`}></button>
         </div>
-        
-        {/* Expanded content with actions */}
-        <AnimatePresence>
-          {expanded && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.2 }}
-              className="mt-4 pt-4 border-t"
-            >
-              {/* Additional content can be shown here when expanded */}
-              <Link 
-                to={`/announcement/${announcement._id}`}
-                className="btn btn-sm btn-outline w-full hover:bg-green-500 hover:text-white hover:border-green-500"
-              >
-                View full announcement and comments
-              </Link>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
     </div>
   );

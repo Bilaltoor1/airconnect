@@ -26,12 +26,12 @@ export const getBatchSummary = async (req, res) => {
 
 export const createBatch = async (req, res) => {
     try {
-        const { name } = req.body;
+        const { name, section } = req.body;
         const existingBatch = await Batch.findOne({ name });
         if (existingBatch) {
             return res.status(400).json({ message: 'Batch name already exists' });
         }
-        const newBatch = new Batch({ name, coordinator: req.user._id });
+        const newBatch = new Batch({ name, section, coordinator: req.user._id });
         await newBatch.save();
         res.status(201).json(newBatch);
     } catch (error) {
@@ -39,6 +39,7 @@ export const createBatch = async (req, res) => {
         res.status(500).json({ message: 'Something went wrong, please try again later' });
     }
 };
+
 export const updateBatch = async (req, res) => {
     try {
         const { batchId } = req.params;

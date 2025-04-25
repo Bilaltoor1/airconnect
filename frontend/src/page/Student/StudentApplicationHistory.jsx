@@ -1,10 +1,12 @@
 import { useHistoryofApplications, useClearStudentApplicationHistory, useHideStudentApplication } from '@/hooks/useApplication';
 import { useAuth } from '@/context/AuthContext.jsx';
-import { getStatusColor } from '@/utils/applicationStatusColors';
+import { getStatusColor, getStatusDisplayText } from '@/utils/applicationStatusColors';
 import { useNavigate } from 'react-router-dom';
 import { Trash2, ExternalLink, Check, Square, CheckSquare } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useState } from 'react';
+import StatusLegend from '@/components/StatusLegend';
+import ApplicationStatusFilter from '@/components/ApplicationStatusFilter';
 
 const StudentApplicationHistory = () => {
     const { user } = useAuth();
@@ -15,6 +17,12 @@ const StudentApplicationHistory = () => {
     
     const [selectionMode, setSelectionMode] = useState(false);
     const [selectedApplications, setSelectedApplications] = useState([]);
+    const [activeFilter, setActiveFilter] = useState('all');
+
+    // Filter applications based on activeFilter
+    const filteredApplications = applications.filter(app => 
+        activeFilter === 'all' || app.applicationStatus === activeFilter
+    );
 
     if (isLoading) return <div className="flex justify-center items-center h-screen">Loading...</div>;
     if (error) return <div className="flex justify-center items-center h-screen">Error loading applications</div>;
@@ -85,12 +93,14 @@ const StudentApplicationHistory = () => {
     };
 
     return (
-        <div className="mx-6 py-4">
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold uppercase">My Applications</h1>
+        <div className="mx-auto max-w-screen-2xl p-4 sm:px-6">
+            <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
+                <div>
+                    <h1 className="text-2xl font-bold uppercase">My Applications</h1>
+                </div>
                 
                 {applications.length > 0 && (
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                         {selectionMode ? (
                             <>
                                 <button 
@@ -133,17 +143,31 @@ const StudentApplicationHistory = () => {
                 )}
             </div>
             
+            {/* Application filters and legend */}
+            {applications.length > 0 && (
+                <div className="mb-6">
+                    <ApplicationStatusFilter activeFilter={activeFilter} setActiveFilter={setActiveFilter} />
+                    <StatusLegend userRole="student" />
+                </div>
+            )}
+            
             {applications.length === 0 ? (
                 <div className="text-center p-8 bg-base-200 rounded-lg">
                     <p className="text-base-content/70">No applications found.</p>
                 </div>
+            ) : filteredApplications.length === 0 ? (
+                <div className="text-center p-8 bg-base-200 rounded-lg">
+                    <p className="text-base-content/70">No applications match the selected filter.</p>
+                </div>
             ) : (
-                <ul className='mt-6 grid xl:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-4'>
-                    {applications.map((application) => (
-                        <li key={application._id}
-                            className={`p-5 rounded-xl shadow-md hover:shadow-lg transition-shadow relative ${getStatusColor(application.applicationStatus)}`}
-                            onClick={() => handleClick(application._id)}>
-                            
+                <div className="grid md:grid-cols-2 gap-6">
+                    {filteredApplications.map((application) => (
+                        <div 
+                            key={application._id}
+                            className={`p-5 rounded-lg shadow-md border-l-4 ${getStatusColor(application.applicationStatus)} hover:shadow-lg transition-shadow relative`}
+                            onClick={() => handleClick(application._id)}
+                        >
+                            {/* Selection button in selection mode */}
                             {selectionMode && (
                                 <button 
                                     className="absolute top-2 right-2 p-1 rounded-full bg-white/70 hover:bg-white text-gray-600 hover:text-primary transition-colors"
@@ -157,65 +181,63 @@ const StudentApplicationHistory = () => {
                                 </button>
                             )}
                             
-                            <div>
-                                <div className="flex justify-between items-start mb-2">
-                                    <h2 className="text-xl font-bold">{application.name}</h2>
-                                    <span className="px-2 py-1 bg-white bg-opacity-30 rounded text-xs">
-                                        {application.applicationStatus}
-                                    </span>
-                                </div>
-                                <p className="text-sm mb-2">Reason: {application.reason}</p>
-                                <p className="line-clamp-3 mb-3">{application.content}</p>
-                                
-                                {application.advisorComments && (
-                                    <div className="flex items-center mb-1">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-                                        </svg>
-                                        <span className="text-xs">Advisor left a comment</span>
-                                    </div>
-                                )}
-                                
-                                {application.coordinatorComments && (
-                                    <div className="flex items-center mb-1">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-                                        </svg>
-                                        <span className="text-xs">Coordinator left a comment</span>
-                                    </div>
-                                )}
-                                
-                                {application.comments && application.comments.length > 0 && (
-                                    <div className="flex items-center mb-3">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                                        </svg>
-                                        <span className="text-xs">{application.comments.length} comment{application.comments.length !== 1 ? 's' : ''}</span>
-                                    </div>
-                                )}
-                                
-                                <div className="flex justify-between items-center mt-4">
-                                    <div>
-                                        {application.applicationStatus === 'Transit' && (
-                                            <span className="text-xs">Approved by: {application.advisor.name}</span>
-                                        )}
-                                    </div>
-                                    <button 
-                                        className="btn btn-xs btn-primary flex items-center gap-1"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleClick(application._id);
-                                        }}
-                                        disabled={selectionMode}
-                                    >
-                                        <ExternalLink size={12} />
-                                        View Details
-                                    </button>
+                            <div className="flex justify-between items-start mb-4">
+                                <h2 className="text-xl font-semibold">{application.name}</h2>
+                                <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(application.applicationStatus)}`}>
+                                    {getStatusDisplayText(application.applicationStatus)}
+                                </span>
+                            </div>
+                            
+                            <p className="text-sm text-gray-500 mb-4">Reason: {application.reason}</p>
+                            
+                            <div className="mb-4">
+                                <p className="font-medium mb-1">Application Content:</p>
+                                <div className="bg-gray-50 p-3 rounded text-sm max-h-32 overflow-y-auto">
+                                    {application.content.length > 150 
+                                        ? `${application.content.substring(0, 150)}...` 
+                                        : application.content
+                                    }
                                 </div>
                             </div>
-                        </li>
+                            
+                            {application.advisorComments && (
+                                <div className="mb-4">
+                                    <p className="font-medium mb-1 text-yellow-700">Advisor Comment:</p>
+                                    <div className="bg-yellow-50 p-3 rounded text-sm">
+                                        {application.advisorComments}
+                                    </div>
+                                </div>
+                            )}
+                            
+                            {application.coordinatorComments && (
+                                <div className="mb-4">
+                                    <p className="font-medium mb-1 text-yellow-700">Coordinator Comment:</p>
+                                    <div className="bg-yellow-50 p-3 rounded text-sm">
+                                        {application.coordinatorComments}
+                                    </div>
+                                </div>
+                            )}
+                            
+                            <div className="flex justify-between">
+                                <div>
+                                    {application.applicationStatus === 'Forward to Coordinator' && (
+                                        <span className="text-xs text-gray-500">Approved by: {application.advisor.name}</span>
+                                    )}
+                                </div>
+                                <button 
+                                    className="btn btn-sm btn-outline"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleClick(application._id);
+                                    }}
+                                    disabled={selectionMode}
+                                >
+                                    View Full Details
+                                </button>
+                            </div>
+                        </div>
                     ))}
-                </ul>
+                </div>
             )}
         </div>
     );

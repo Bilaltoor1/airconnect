@@ -1,8 +1,9 @@
 import { useApplications, useUpdateApplicationByCoordinator } from '@/hooks/useApplication';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
-import { getStatusColor } from '@/utils/applicationStatusColors';
+import { getStatusColor, getStatusDisplayText } from '@/utils/applicationStatusColors';
 import { useNavigate } from 'react-router-dom';
+import ApplicationStatusFilter from '@/components/ApplicationStatusFilter';
 
 const CoordinatorApplicationPage = () => {
     const { data: applications = [], isLoading, error } = useApplications();
@@ -10,10 +11,16 @@ const CoordinatorApplicationPage = () => {
     const [selectedApplication, setSelectedApplication] = useState(null);
     const [comment, setComment] = useState('');
     const navigate = useNavigate();
+    const [activeFilter, setActiveFilter] = useState('all');
+
+    // Filter applications based on activeFilter
+    const filteredApplications = applications.filter(app => 
+        activeFilter === 'all' || app.applicationStatus === activeFilter
+    );
 
     const handleApprove = (applicationId) => {
         updateApplicationByCoordinator.mutate(
-            { id: applicationId, data: { applicationStatus: 'Forwarded', coordinatorComments: comment || '' } },
+            { id: applicationId, data: { applicationStatus: 'Approved by Coordinator', coordinatorComments: comment || '' } },
             {
                 onSuccess: () => {
                     toast.success('Application approved successfully');
@@ -59,62 +66,74 @@ const CoordinatorApplicationPage = () => {
         <div className="max-w-6xl mx-auto py-8 px-4">
             <h1 className="text-2xl font-bold mb-6">Applications to Approve</h1>
             
+            {applications.length > 0 && (
+                <div className="mb-6">
+                    <ApplicationStatusFilter activeFilter={activeFilter} setActiveFilter={setActiveFilter} />
+                </div>
+            )}
+            
             {applications.length > 0 ? (
-                <div className="grid md:grid-cols-2 gap-6">
-                    {applications.map((application) => (
-                        <div 
-                            key={application._id} 
-                            className={`p-5 rounded-lg shadow-md border-l-4 ${getStatusColor(application.applicationStatus)} hover:shadow-lg transition-shadow`}
-                        >
-                            <div className="flex justify-between items-start mb-4">
-                                <h2 className="text-xl font-semibold">{application.name}</h2>
-                                <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(application.applicationStatus)}`}>
-                                    {application.applicationStatus}
-                                </span>
-                            </div>
-                            
-                            <p className="text-sm text-gray-500 mb-2">Roll No: {application.rollNo}</p>
-                            <p className="text-sm text-gray-500 mb-4">Reason: {application.reason}</p>
-                            
-                            <div className="mb-4">
-                                <p className="font-medium mb-1">Application Content:</p>
-                                <div className="bg-gray-50 p-3 rounded text-sm max-h-32 overflow-y-auto">
-                                    {application.content.length > 150 
-                                        ? `${application.content.substring(0, 150)}...` 
-                                        : application.content
-                                    }
+                filteredApplications.length > 0 ? (
+                    <div className="grid md:grid-cols-2 gap-6">
+                        {filteredApplications.map((application) => (
+                            <div 
+                                key={application._id} 
+                                className={`p-5 rounded-lg shadow-md border-l-4 ${getStatusColor(application.applicationStatus)} hover:shadow-lg transition-shadow`}
+                            >
+                                <div className="flex justify-between items-start mb-4">
+                                    <h2 className="text-xl font-semibold">{application.name}</h2>
+                                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(application.applicationStatus)}`}>
+                                        {getStatusDisplayText(application.applicationStatus)}
+                                    </span>
                                 </div>
-                            </div>
-                            
-                            {application.advisorComments && (
+                                
+                                <p className="text-sm text-gray-500 mb-2">Roll No: {application.rollNo}</p>
+                                <p className="text-sm text-gray-500 mb-4">Reason: {application.reason}</p>
+                                
                                 <div className="mb-4">
-                                    <p className="font-medium mb-1 text-yellow-700">Advisor Comment:</p>
-                                    <div className="bg-yellow-50 p-3 rounded text-sm">
-                                        {application.advisorComments}
+                                    <p className="font-medium mb-1">Application Content:</p>
+                                    <div className="bg-gray-50 p-3 rounded text-sm max-h-32 overflow-y-auto">
+                                        {application.content.length > 150 
+                                            ? `${application.content.substring(0, 150)}...` 
+                                            : application.content
+                                        }
                                     </div>
                                 </div>
-                            )}
-                            
-                            <div className="flex justify-between">
-                                <button 
-                                    onClick={() => handleViewDetails(application._id)}
-                                    className="btn btn-sm btn-outline"
-                                >
-                                    View Full Details
-                                </button>
                                 
-                                {application.applicationStatus === 'Transit' && (
-                                    <button 
-                                        onClick={() => setSelectedApplication(application)}
-                                        className="btn btn-sm btn-primary"
-                                    >
-                                        Review
-                                    </button>
+                                {application.advisorComments && (
+                                    <div className="mb-4">
+                                        <p className="font-medium mb-1 text-yellow-700">Advisor Comment:</p>
+                                        <div className="bg-yellow-50 p-3 rounded text-sm">
+                                            {application.advisorComments}
+                                        </div>
+                                    </div>
                                 )}
+                                
+                                <div className="flex justify-between">
+                                    <button 
+                                        onClick={() => handleViewDetails(application._id)}
+                                        className="btn btn-sm btn-outline"
+                                    >
+                                        View Full Details
+                                    </button>
+                                    
+                                    {application.applicationStatus === 'Forward to Coordinator' && (
+                                        <button 
+                                            onClick={() => setSelectedApplication(application)}
+                                            className="btn btn-sm btn-primary"
+                                        >
+                                            Review
+                                        </button>
+                                    )}
+                                </div>
                             </div>
-                        </div>
-                    ))}
-                </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="text-center p-8 bg-gray-50 rounded-lg">
+                        <p className="text-gray-500">No applications match the selected filter.</p>
+                    </div>
+                )
             ) : (
                 <div className="text-center p-8 bg-gray-50 rounded-lg">
                     <h3 className="text-xl font-medium text-gray-700">No applications to review</h3>

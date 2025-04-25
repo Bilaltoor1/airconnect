@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import { useCreateBatch, useUpdateBatch, useRemoveBatch, useBatchSummary } from '@/hooks/useBatch';
 import { Plus, PencilLine, Trash2, ChevronRight } from 'lucide-react';
+import { useAnnouncementsFilter } from '@/hooks/useAnnouncementFilter';
 
 const BatchManagementPage = () => {
     const { data: batchSummary, isLoading, error } = useBatchSummary();
+    const { data: sections, isLoading: sectionsLoading } = useAnnouncementsFilter();
     const createBatch = useCreateBatch();
     const updateBatch = useUpdateBatch();
     const removeBatch = useRemoveBatch();
-    const [batchData, setBatchData] = useState({ name: '', batchId: '' });
+    const [batchData, setBatchData] = useState({ name: '', section: '', batchId: '' });
     const [editingBatchId, setEditingBatchId] = useState(null);
     const [expandedBatch, setExpandedBatch] = useState(null);
 
@@ -18,14 +20,18 @@ const BatchManagementPage = () => {
 
     const handleCreate = (e) => {
         e.preventDefault();
-        createBatch.mutate({ name: batchData.name });
-        setBatchData({ name: '', batchId: '' });
+        if (!batchData.section) {
+            alert('Please select a section for the batch');
+            return;
+        }
+        createBatch.mutate({ name: batchData.name, section: batchData.section });
+        setBatchData({ name: '', section: '', batchId: '' });
     };
 
     const handleUpdate = (batchId) => {
         updateBatch.mutate({ batchId, batchData: { name: batchData.name } });
         setEditingBatchId(null);
-        setBatchData({ name: '', batchId: '' });
+        setBatchData({ name: '', section: '', batchId: '' });
     };
 
     const handleRemove = (batchId) => {
@@ -68,12 +74,31 @@ const BatchManagementPage = () => {
                                 type="text"
                                 name="name"
                                 className="w-full py-2 sm:py-3 bg-base-100 rounded-lg border border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-500 px-3"
-                                placeholder="Enter batch name (e.g., CSE 2023)"
+                                placeholder="Enter batch name (e.g., BSSE-FALL-21)"
                                 value={batchData.name}
                                 onChange={handleChange}
                                 required
                             />
                         </div>
+                        
+                        <div>
+                            <label className="block text-sm font-medium mb-1">Section</label>
+                            <select
+                                name="section"
+                                className="w-full py-2 sm:py-3 bg-base-100 rounded-lg border border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-500 px-3 appearance-none"
+                                value={batchData.section}
+                                onChange={handleChange}
+                                required
+                            >
+                                <option value="">Select a Section</option>
+                                {!sectionsLoading && sections?.map((section) => (
+                                    <option key={section._id} value={section.section}>
+                                        {section.section}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                        
                         <button
                             type="submit"
                             className="w-full py-2 sm:py-3 px-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-center gap-2"
@@ -136,7 +161,7 @@ const BatchManagementPage = () => {
                                             <button
                                                 onClick={() => {
                                                     setEditingBatchId(null);
-                                                    setBatchData({ name: '', batchId: '' });
+                                                    setBatchData({ name: '', section: '', batchId: '' });
                                                 }}
                                                 className="bg-gray-300 text-gray-700 py-1 px-2 rounded-md text-sm"
                                             >
@@ -259,7 +284,7 @@ const BatchManagementPage = () => {
                                                 <button
                                                     onClick={() => {
                                                         setEditingBatchId(null);
-                                                        setBatchData({ name: '', batchId: '' });
+                                                        setBatchData({ name: '', section: '', batchId: '' });
                                                     }}
                                                     className="bg-gray-300 text-gray-700 py-1 px-3 rounded-md text-sm hover:bg-gray-400 transition-colors"
                                                 >

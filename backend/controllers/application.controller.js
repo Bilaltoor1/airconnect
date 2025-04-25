@@ -6,6 +6,9 @@ import {
     createAdvisorActionNotification,
     createCoordinatorActionNotification
 } from './notification.controller.js';
+import cloudinary from '../helpers/cloudinary.js';
+import { uploadToCloudinaryWithRetry } from '../helpers/cloudinaryUpload.js';
+import fs from 'fs';
 
 export const fetchHistoryofApplication = async (req, res) => {
     const { studentID, advisor, coordinator } = req.query;
@@ -29,8 +32,11 @@ export const fetchHistoryofApplication = async (req, res) => {
     if (coordinator) {
         query.coordinator = coordinator;
         query.hiddenFromCoordinator = { $ne: true };
-        // Only include applications that have been Forwarded or Rejected
-        query.applicationStatus = { $in: ['Forwarded', 'Rejected'] };
+        // Only include applications explicitly processed by coordinator
+        query.$or = [
+            { applicationStatus: 'Approved by Coordinator' },
+            { applicationStatus: 'Rejected', coordinatorComments: { $ne: '' } } // Only include rejections with coordinator comments
+        ];
     }
 
     console.log(query);
@@ -77,11 +83,11 @@ export const fetchApplications = async (req, res) => {
         const userRole = req.user.role;
 
         if (userRole === 'coordinator') {
-            // Coordinator can see only Transit applications
-            query.applicationStatus = 'Transit';
+            // Coordinator can see applications with either status (for compatibility)
+            query.applicationStatus = { $in: ['Forward to Coordinator', 'Transit'] };
             const applications = await Application.find(query)
                 .populate('advisor', 'name email')
-                .populate('coordinator', 'name email')
+                .populate('coordinator', 'name email') 
                 .populate('studentID', 'name email');
 
             return res.status(200).json(applications);
@@ -94,7 +100,7 @@ export const fetchApplications = async (req, res) => {
 
             // Find applications where the student belongs to the same batch as the advisor
             const applications = await Application.find({
-                ...query, studentID: { $in: studentIds }, applicationStatus: { $ne: 'Forwarded' } // Exclude forwarded applications
+                ...query, studentID: { $in: studentIds }, applicationStatus: 'Pending' // Only include pending applications
             })
                 .populate('advisor', 'name email')
                 .populate('coordinator', 'name email')
@@ -112,9 +118,39 @@ export const fetchApplications = async (req, res) => {
 export const createApplication = async (req, res) => {
     try {
         const { name, email, studentID, rollNo, reason, content } = req.body;
+        
+        // Upload files to Cloudinary if any
+        let mediaUrls = [];
+        if (req.files && req.files.length > 0) {
+            try {
+                console.log('Uploading application files to Cloudinary...');
+                const uploadPromises = req.files.map(file => 
+                    uploadToCloudinaryWithRetry(file.path, {
+                        folder: 'applications',
+                        resource_type: 'auto' // Auto-detect file type
+                    })
+                );
+                
+                const uploadResults = await Promise.all(uploadPromises);
+                mediaUrls = uploadResults.map(result => result.secure_url);
+                
+                // Clean up temp files
+                req.files.forEach(file => {
+                    try {
+                        fs.unlinkSync(file.path);
+                    } catch (err) {
+                        console.error('Error removing temp file:', err);
+                    }
+                });
+            } catch (uploadError) {
+                console.error('Error uploading files:', uploadError);
+                return res.status(500).json({ message: 'Failed to upload files. Please try again.' });
+            }
+        }
+        
         const batch = await Batch.findOne({ students: studentID }).populate('advisor').populate('coordinator');
         if (!batch) return res.status(404).json({ message: 'Batch not found' });
-        console.log(batch)
+        
         const application = new Application({
             name,
             email,
@@ -123,7 +159,8 @@ export const createApplication = async (req, res) => {
             content,
             advisor: batch.advisor._id,
             rollNo,
-            coordinator: batch.coordinator._id // Ensure coordinator is correctly populated
+            coordinator: batch.coordinator._id,
+            media: mediaUrls // Store media URLs in the application
         });
 
         await application.save();
@@ -152,7 +189,12 @@ export const updateApplicationByAdvisor = async (req, res) => {
         }
 
         if (signature) application.signature = signature;
-        if (applicationStatus) application.applicationStatus = applicationStatus;
+        // Map "Transit" to "Forward to Coordinator" if present in request
+        if (applicationStatus === 'Transit') {
+            application.applicationStatus = 'Forward to Coordinator';
+        } else if (applicationStatus) {
+            application.applicationStatus = applicationStatus;
+        }
         if (advisorComments !== undefined) application.advisorComments = advisorComments;
 
         application.advisorActionDate = Date.now();
@@ -182,7 +224,12 @@ export const updateApplicationByCoordinator = async (req, res) => {
             return res.status(403).json({ message: 'You are not authorized to update this application' });
         }
 
-        if (applicationStatus) application.applicationStatus = applicationStatus;
+        // Map "Forwarded" to "Approved by Coordinator" if present in request
+        if (applicationStatus === 'Forwarded') {
+            application.applicationStatus = 'Approved by Coordinator';
+        } else if (applicationStatus) {
+            application.applicationStatus = applicationStatus;
+        }
         if (coordinatorComments !== undefined) application.coordinatorComments = coordinatorComments;
 
         application.coordinatorActionDate = Date.now();
@@ -220,6 +267,37 @@ export const updateApplicationByStudent = async (req, res) => {
 
         if (content) application.content = content;
         if (reason) application.reason = reason;
+        
+        // Handle file uploads if any
+        if (req.files && req.files.length > 0) {
+            try {
+                console.log('Uploading additional files to Cloudinary...');
+                const uploadPromises = req.files.map(file => 
+                    uploadToCloudinaryWithRetry(file.path, {
+                        folder: 'applications',
+                        resource_type: 'auto'
+                    })
+                );
+                
+                const uploadResults = await Promise.all(uploadPromises);
+                const newMediaUrls = uploadResults.map(result => result.secure_url);
+                
+                // Add new media to existing media
+                application.media = [...(application.media || []), ...newMediaUrls];
+                
+                // Clean up temp files
+                req.files.forEach(file => {
+                    try {
+                        fs.unlinkSync(file.path);
+                    } catch (err) {
+                        console.error('Error removing temp file:', err);
+                    }
+                });
+            } catch (uploadError) {
+                console.error('Error uploading files:', uploadError);
+                return res.status(500).json({ message: 'Failed to upload files. Please try again.' });
+            }
+        }
 
         // Reset comments and status if the application was previously commented on
         if (application.advisorComments) {
@@ -369,8 +447,8 @@ export const clearCoordinatorApplicationHistory = async (req, res) => {
         const result = await Application.updateMany(
             {
                 coordinator: userId,
-                // Only hide applications that have been processed (in Forwarded or Rejected status)
-                applicationStatus: { $in: ['Forwarded', 'Rejected'] }
+                // Only hide applications that have been processed (Approved or Rejected status)
+                applicationStatus: { $in: ['Approved by Coordinator', 'Rejected'] }
             },
             { $set: { hiddenFromCoordinator: true } }
         );
@@ -454,7 +532,7 @@ export const hideCoordinatorApplication = async (req, res) => {
         const application = await Application.findOne({
             _id: id,
             coordinator: userId,
-            applicationStatus: { $in: ['Forwarded', 'Rejected'] }
+            applicationStatus: { $in: ['Approved by Coordinator', 'Rejected'] }
         });
 
         if (!application) {

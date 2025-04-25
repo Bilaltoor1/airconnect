@@ -14,13 +14,14 @@ const applicationSchema = new mongoose.Schema({
     reason: { type: String, required: true },
     content: { type: String, required: true },
     rollNo: { type: String, required: true },
-    applicationStatus: { type: String, enum: ['Pending', 'Transit', 'Forwarded', 'Rejected'], default: 'Pending' },
+    applicationStatus: { type: String, enum: ['Pending', 'Forward to Coordinator', 'Approved by Coordinator', 'Rejected'], default: 'Pending' },
     signature: { type: String },
     advisor: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     coordinator: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     advisorComments: { type: String, default: '' },
     coordinatorComments: { type: String, default: '' },
     comments: [commentSchema],
+    media: [{ type: String }], // Array of Cloudinary URLs for uploaded files
     hiddenFromStudent: { type: Boolean, default: false },
     hiddenFromAdvisor: { type: Boolean, default: false },
     hiddenFromCoordinator: { type: Boolean, default: false }

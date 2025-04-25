@@ -30,6 +30,7 @@ const ProfileSetup = () => {
     const navigate = useNavigate();
     const { data: sectionsData, isLoading: sectionsLoading } = useAllAnnouncementsFilter();
     const { data: batchesData, isLoading: batchesLoading } = useBatches();
+    const [filteredBatches, setFilteredBatches] = useState([]);
 
     const [section, setSection] = useState('');
     const [rollNo, setRollNo] = useState('');
@@ -48,6 +49,32 @@ const ProfileSetup = () => {
         }
     }, [user, navigate]);
 
+    useEffect(() => {
+        if (!batchesLoading && batchesData) {
+            if (section) {
+                const exactSectionMatches = batchesData.filter(batch => 
+                    batch.section && batch.section === section
+                );
+                
+                if (exactSectionMatches.length > 0) {
+                    setFilteredBatches(exactSectionMatches);
+                } else {
+                    const sectionPrefix = section.toLowerCase().split(' ')[0];
+                    const nameBasedMatches = batchesData.filter(batch => 
+                        batch.name.toLowerCase().includes(sectionPrefix)
+                    );
+                    setFilteredBatches(nameBasedMatches);
+                }
+            } else {
+                setFilteredBatches(batchesData);
+            }
+        }
+    }, [section, batchesData, batchesLoading]);
+
+    useEffect(() => {
+        setBatchId('');
+    }, [section]);
+
     const handleLogout = () => {
         logout({
             onSuccess: () => {
@@ -63,7 +90,6 @@ const ProfileSetup = () => {
         const file = e.target.files[0];
         if (!file) return;
 
-        // Validate file type
         if (!file.type.startsWith('image/')) {
             toast.error('Please select an image file');
             if (fileInputRef.current) {
@@ -72,7 +98,6 @@ const ProfileSetup = () => {
             return;
         }
 
-        // Validate file size (5MB max)
         if (file.size > 5 * 1024 * 1024) {
             toast.error('Image size must be less than 5MB');
             if (fileInputRef.current) {
@@ -145,7 +170,6 @@ const ProfileSetup = () => {
             formData.append('officeNumber', officeNumber);
         }
         
-        // Debug log to verify data
         const formDataObj = {};
         formData.forEach((value, key) => {
             formDataObj[key] = value instanceof File ? `File: ${value.name} (${Math.round(value.size/1024)}KB)` : value;
@@ -290,7 +314,7 @@ const ProfileSetup = () => {
                                             {batchesLoading ? (
                                                 <option>Loading...</option>
                                             ) : (
-                                                batchesData.map((batch) => (
+                                                filteredBatches.map((batch) => (
                                                     <option key={batch._id} value={batch._id}>
                                                         {batch.name}
                                                     </option>

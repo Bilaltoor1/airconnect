@@ -40,7 +40,27 @@ export const createAnnouncementNotification = async (announcement, creator) => {
             }
         } else if (announcement.section && announcement.section !== 'all') {
             // Section-specific announcement
-            userQuery = { section: announcement.section, role: 'student' };
+            if (announcement.restrictToTeacherBatches && creator.role === 'teacher') {
+                // For teacher-restricted announcements, only notify students in batches taught by this teacher
+                console.log('Creating notifications for teacher-restricted announcement');
+                
+                // Find all batches this teacher teaches
+                const teacherBatches = await Batch.find({ 
+                    teachers: creator._id,
+                    section: announcement.section
+                });
+                
+                // Collect all students from these batches
+                for (const batch of teacherBatches) {
+                    recipients.push(...batch.students);
+                }
+                
+                // No need for a query in this case as we've directly collected recipients
+                userQuery = {};
+            } else {
+                // Regular section-specific announcement
+                userQuery = { section: announcement.section, role: 'student' };
+            }
         } else {
             // All users announcement
             userQuery = { role: 'student' };
@@ -52,8 +72,11 @@ export const createAnnouncementNotification = async (announcement, creator) => {
             recipients.push(...users.map(user => user._id));
         }
         
+        // Make sure we have unique recipients (a student might be in multiple batches)
+        const uniqueRecipients = [...new Set(recipients.map(id => id.toString()))];
+        
         // Create a notification for each recipient
-        const notificationPromises = recipients.map(recipientId => {
+        const notificationPromises = uniqueRecipients.map(recipientId => {
             return createNotification({
                 recipient: recipientId,
                 sender: creator._id,

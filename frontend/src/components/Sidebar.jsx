@@ -20,15 +20,21 @@ import {
     GraduationCap,
     UserPlus,
     Layout,
-    UserCheck
+    UserCheck,
+    ChevronDown,
+    ChevronRight,
+    Layers,
+    Grid
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from "@/context/AuthContext.jsx";
+import { motion, AnimatePresence } from 'framer-motion';
 
 const Sidebar = () => {
     const location = useLocation();
     const [activeLink, setActiveLink] = useState(location.pathname);
     const [isExpanded, setIsExpanded] = useState(false);
+    const [expandedItems, setExpandedItems] = useState({});
     const { user } = useAuth(); // Get the authenticated user
 
     useEffect(() => {
@@ -44,6 +50,13 @@ const Sidebar = () => {
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, [location.pathname]);
+
+    const toggleSubMenu = (text) => {
+        setExpandedItems(prev => ({
+            ...prev,
+            [text]: !prev[text]
+        }));
+    };
 
     const getLinkItems = (role) => {
         switch (role) {
@@ -68,9 +81,16 @@ const Sidebar = () => {
                     { icon: Bell, text: 'Notification', link: '/' },
                     { icon: Briefcase, text: 'Jobs & interns', link: '/job-listings' },
                     { icon: BadgePlus, text: 'Announcement', link: '/create-announcement' },
-                    { icon: Layout, text: 'Batches', link: '/batches' },
-                    { icon: Settings, text: 'Batch Manage', link: '/batches-management' },
-                    { icon: Settings, text: 'Section Manage', link: '/section-filter-management' },
+                    { 
+                        icon: Layout, 
+                        text: 'Batches', 
+                        link: '/batches',
+                        hasChildren: true,
+                        children: [
+                            { icon: Layers, text: 'Batch Manage', link: '/batches-management' },
+                            { icon: Grid, text: 'Section Manage', link: '/section-filter-management' },
+                        ]
+                    },
                     { icon: FileSpreadsheet, text: 'Application', link: '/coordinator-applications' },
                     { icon: UserPlus, text: 'Add Student', link: '/add-student' },
                     { icon: UserPlus, text: 'Add Teacher', link: '/add-teacher' },
@@ -114,10 +134,12 @@ const Sidebar = () => {
             >
                 <div className="flex justify-between items-center p-4 border-b">
                     <div className={`flex items-center ${!isExpanded && 'md:flex hidden'}`}>
-                        <h2 className='text-xl font-bold text-primary'>
-                            Air University
-                        </h2>
-                        <span className='ml-2 w-3 h-3 bg-gradient-to-r from-green-400 to-emerald-600 rounded-full'></span>
+                        <Link to="/" className="flex items-center">
+                            <h2 className='text-xl font-bold text-primary'>
+                                Air University
+                            </h2>
+                            <span className='ml-2 w-3 h-3 bg-gradient-to-r from-green-400 to-emerald-600 rounded-full'></span>
+                        </Link>
                     </div>
                     <button 
                         onClick={toggleSidebar} 
@@ -131,19 +153,85 @@ const Sidebar = () => {
                     <ul className="flex flex-col gap-1 px-2">
                         {linkItems.map((item, index) => (
                             <li key={index}>
-                                <Link 
-                                    to={item.link} 
-                                    className={`flex items-center rounded-md px-3 py-2.5 transition-all duration-200
-                                        ${activeLink === item.link 
-                                            ? 'bg-gradient-to-r from-emerald-600 to-green-400 text-white shadow-md' 
-                                            : 'hover:bg-gray-100 dark:hover:bg-gray-700'}`}
-                                    onClick={() => setActiveLink(item.link)}
-                                >
-                                    <item.icon className="w-5 h-5" />
-                                    <span className={`ml-3 font-medium ${!isExpanded ? 'md:block hidden' : 'block'}`}>
-                                        {item.text}
-                                    </span>
-                                </Link>
+                                {item.hasChildren ? (
+                                    <div className="flex flex-col">
+                                        <div 
+                                            className={`flex items-center justify-between rounded-md px-3 py-2.5 transition-all duration-200
+                                                ${(activeLink === item.link || item.children?.some(child => activeLink === child.link))
+                                                    ? 'bg-gradient-to-r from-emerald-600 to-green-400 text-white shadow-md' 
+                                                    : 'hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                                        >
+                                            <Link 
+                                                to={item.link}
+                                                className="flex items-center flex-grow"
+                                                onClick={() => setActiveLink(item.link)}
+                                            >
+                                                <item.icon className="w-5 h-5" />
+                                                <span className={`ml-3 font-medium ${!isExpanded ? 'md:block hidden' : 'block'}`}>
+                                                    {item.text}
+                                                </span>
+                                            </Link>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    toggleSubMenu(item.text);
+                                                }}
+                                                className="ml-1"
+                                            >
+                                                {(isExpanded || window.innerWidth >= 768) && (
+                                                    expandedItems[item.text] ? 
+                                                    <ChevronDown className="w-4 h-4" /> : 
+                                                    <ChevronRight className="w-4 h-4" />
+                                                )}
+                                            </button>
+                                        </div>
+                                        <AnimatePresence>
+                                            {expandedItems[item.text] && (
+                                                <motion.div
+                                                    initial={{ height: 0, opacity: 0 }}
+                                                    animate={{ height: 'auto', opacity: 1 }}
+                                                    exit={{ height: 0, opacity: 0 }}
+                                                    transition={{ duration: 0.3 }}
+                                                    className="overflow-hidden"
+                                                >
+                                                    <ul className="pl-7 pt-1">
+                                                        {item.children.map((child, childIndex) => (
+                                                            <li key={`${index}-${childIndex}`}>
+                                                                <Link 
+                                                                    to={child.link} 
+                                                                    className={`flex items-center rounded-md px-3 py-2 transition-all duration-200
+                                                                        ${activeLink === child.link 
+                                                                            ? 'bg-gradient-to-r from-emerald-600 to-green-400 text-white shadow-md' 
+                                                                            : 'hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                                                                    onClick={() => setActiveLink(child.link)}
+                                                                >
+                                                                    <child.icon className="w-4 h-4" />
+                                                                    <span className={`ml-2 font-medium text-sm ${!isExpanded ? 'md:block hidden' : 'block'}`}>
+                                                                        {child.text}
+                                                                    </span>
+                                                                </Link>
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
+                                    </div>
+                                ) : (
+                                    <Link 
+                                        to={item.link} 
+                                        className={`flex items-center rounded-md px-3 py-2.5 transition-all duration-200
+                                            ${activeLink === item.link 
+                                                ? 'bg-gradient-to-r from-emerald-600 to-green-400 text-white shadow-md' 
+                                                : 'hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                                        onClick={() => setActiveLink(item.link)}
+                                    >
+                                        <item.icon className="w-5 h-5" />
+                                        <span className={`ml-3 font-medium ${!isExpanded ? 'md:block hidden' : 'block'}`}>
+                                            {item.text}
+                                        </span>
+                                    </Link>
+                                )}
                             </li>
                         ))}
                     </ul>

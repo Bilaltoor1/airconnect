@@ -105,15 +105,15 @@ const getBatchFilters = async (req, res) => {
         
         if (req.user.role === 'student') {
             // Students can only see their own batch
-            batches = await Batch.find({ students: req.user._id }).select('_id name');
+            batches = await Batch.find({ students: req.user._id }).select('_id name section');
         } 
         else if (req.user.role === 'teacher') {
             // Teachers can see batches they are assigned to
-            batches = await Batch.find({ teachers: req.user._id }).select('_id name');
+            batches = await Batch.find({ teachers: req.user._id }).select('_id name section');
         } 
         else {
             // Coordinators can see all batches
-            batches = await Batch.find().select('_id name');
+            batches = await Batch.find().select('_id name section');
         }
         
         res.status(200).json(batches);

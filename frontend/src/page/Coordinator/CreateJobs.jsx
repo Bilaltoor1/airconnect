@@ -17,7 +17,43 @@ const CreateJob = () => {
     const [section, setSection] = useState(user.section || 'all');
     const [jobType, setJobType] = useState('on-site');
     const [jobTime, setJobTime] = useState('full-time');
-    const [previewImage, setPreviewImage] = useState('https://plus.unsplash.com/premium_photo-1664546293816-191e0566f19e?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');
+    const [thumbnailPreview, setThumbnailPreview] = useState(null);
+    
+    const getFileIcon = (fileType) => {
+        if (fileType.includes('image')) return '🖼️';
+        if (fileType.includes('pdf')) return '📄';
+        if (fileType.includes('doc')) return '📝';
+        if (fileType.includes('sheet') || fileType.includes('excel')) return '📊';
+        if (fileType.includes('video')) return '🎥';
+        return '📁';
+    };
+
+    const handleImageChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setThumbnail(file);
+            if (file.type.includes('image')) {
+                setThumbnailPreview({
+                    type: 'image',
+                    url: URL.createObjectURL(file),
+                    name: file.name,
+                    size: (file.size / 1024).toFixed(2)
+                });
+            } else {
+                setThumbnailPreview({
+                    type: 'file',
+                    icon: getFileIcon(file.type),
+                    name: file.name,
+                    size: (file.size / 1024).toFixed(2)
+                });
+            }
+        }
+    };
+    
+    const removeImage = () => {
+        setThumbnail(null);
+        setThumbnailPreview(null);
+    };
     
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -64,10 +100,10 @@ const CreateJob = () => {
                 setCompany('');
                 setJobDescription('');
                 setThumbnail(null);
+                setThumbnailPreview(null);
                 setSection(user.section || 'all');
                 setJobType('on-site');
                 setJobTime('full-time');
-                setPreviewImage('https://plus.unsplash.com/premium_photo-1664546293816-191e0566f19e?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');
             },
             onError: (error) => {
                 console.error('Error creating job:', error);
@@ -95,23 +131,6 @@ const CreateJob = () => {
         });
     };
     
-    const handleImageChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            setThumbnail(file);
-            const reader = new FileReader();
-            reader.onload = () => {
-                setPreviewImage(reader.result);
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-    
-    const resetImage = () => {
-        setThumbnail(null);
-        setPreviewImage('https://plus.unsplash.com/premium_photo-1664546293816-191e0566f19e?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');
-    };
-
     // Only allow student-affairs role to create jobs
     if (user.role !== 'student-affairs') {
         return null;
@@ -263,30 +282,44 @@ const CreateJob = () => {
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                     Company Logo/Thumbnail
                                 </label>
-                                <div className="flex flex-col items-start gap-4">
-                                    <div className="relative w-full h-44 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden">
-                                        {previewImage && (
-                                            <>
-                                                <img 
-                                                    src={previewImage} 
-                                                    alt="Job thumbnail preview" 
-                                                    className="h-full w-full object-cover"
-                                                />
-                                                {thumbnail && (
+                                {thumbnailPreview ? (
+                                    <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                                        <div className="grid grid-cols-1 gap-3">
+                                            <div className="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-sm flex flex-col">
+                                                {thumbnailPreview.type === 'image' ? (
+                                                    <div className="h-32 mb-2 overflow-hidden rounded bg-gray-100 dark:bg-gray-900">
+                                                        <img 
+                                                            src={thumbnailPreview.url} 
+                                                            alt={thumbnailPreview.name} 
+                                                            className="w-full h-full object-cover"
+                                                        />
+                                                    </div>
+                                                ) : (
+                                                    <div className="h-32 mb-2 flex items-center justify-center bg-gray-100 dark:bg-gray-900 rounded">
+                                                        <span className="text-4xl">{thumbnailPreview.icon}</span>
+                                                    </div>
+                                                )}
+                                                <div className="flex items-center justify-between">
+                                                    <div className="truncate flex-1">
+                                                        <p className="text-xs font-medium truncate">{thumbnailPreview.name}</p>
+                                                        <p className="text-xs text-gray-500">{thumbnailPreview.size} KB</p>
+                                                    </div>
                                                     <button 
                                                         type="button" 
-                                                        className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
-                                                        onClick={resetImage}
+                                                        onClick={removeImage}
+                                                        className="p-1 text-red-500 hover:text-red-700 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-full"
+                                                        aria-label="Remove file"
                                                     >
                                                         <X size={16} />
                                                     </button>
-                                                )}
-                                            </>
-                                        )}
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
+                                ) : (
                                     <label className="btn btn-outline flex items-center gap-2 hover:bg-green-500 hover:text-white transition-colors">
                                         <ImagePlus size={18} />
-                                        {thumbnail ? 'Change Image' : 'Select Image'}
+                                        Select Company Logo
                                         <input
                                             type="file"
                                             className="hidden"
@@ -294,7 +327,7 @@ const CreateJob = () => {
                                             accept="image/*"
                                         />
                                     </label>
-                                </div>
+                                )}
                             </div>
                         </div>
                     </div>
