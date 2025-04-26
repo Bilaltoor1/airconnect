@@ -389,20 +389,26 @@ export const verifyTeacher = async (req, res) => {
             return res.status(400).json({ message: 'User is not a teacher' });
         }
 
-        teacher.isVerified = true;
-        teacher.isApproved = isApproved;
-        teacher.identityConfirmed = true; 
-        
-        if (!isApproved) {
-            teacher.verificationRejectedReason = req.body.reason || 'Not approved by coordinator';
+        if (isApproved) {
+            // Approve the teacher
+            teacher.isVerified = true;
+            teacher.isApproved = true;
+            teacher.identityConfirmed = true;
+            await teacher.save();
+
+            res.status(200).json({ 
+                message: 'Teacher verified successfully',
+                teacher
+            });
+        } else {
+            // Reject the teacher - completely delete from database
+            await UserModel.findByIdAndDelete(teacherId);
+            
+            res.status(200).json({ 
+                message: 'Teacher rejected and removed from system',
+                deleted: true
+            });
         }
-
-        await teacher.save();
-
-        res.status(200).json({ 
-            message: isApproved ? 'Teacher verified successfully' : 'Teacher rejected successfully',
-            teacher
-        });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Something went wrong, please try again later' });

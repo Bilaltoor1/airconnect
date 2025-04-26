@@ -50,7 +50,17 @@ export const updateApplicationByCoordinator = async ({id, data}) => {
 };
 
 export const updateApplicationByStudent = async ({id, data}) => {
-    const response = await axios.patch(`${API_URL}/student/${id}`, data);
+    // Ensure proper headers for FormData with files (auto-detection)
+    const config = {
+        headers: {}
+    };
+    
+    // Don't set Content-Type manually for FormData
+    if (!(data instanceof FormData)) {
+        config.headers['Content-Type'] = 'application/json';
+    }
+    
+    const response = await axios.patch(`${API_URL}/student/${id}`, data, config);
     return response.data;
 };
 

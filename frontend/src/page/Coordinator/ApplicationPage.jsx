@@ -63,7 +63,7 @@ const CoordinatorApplicationPage = () => {
     if (error) return <div className="flex justify-center items-center h-screen">Error loading applications</div>;
 
     return (
-        <div className="max-w-6xl mx-auto py-8 px-4">
+        <div className="p-3 sm:p-6 max-w-6xl mx-auto">
             <h1 className="text-2xl font-bold mb-6">Applications to Approve</h1>
             
             {applications.length > 0 && (

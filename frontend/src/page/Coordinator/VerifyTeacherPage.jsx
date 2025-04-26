@@ -42,12 +42,22 @@ const VerifyTeacherPage = () => {
     };
     
     const handleReject = (teacherId) => {
-        if (window.confirm('Are you sure you want to reject this teacher?')) {
+        if (window.confirm('Are you sure you want to reject this teacher? This will permanently delete their account.')) {
             verifyTeacherMutation.mutate(
                 { teacherId, isApproved: false },
                 {
-                    onSuccess: () => {
-                        toast.success('Teacher rejected successfully');
+                    onSuccess: (response) => {
+                        if (response.data.deleted) {
+                            toast.success('Teacher has been rejected and removed from the system');
+                            // Filter out the rejected teacher from the local state
+                            if (pendingTeachers) {
+                                queryClient.setQueryData('pendingTeachers', 
+                                    pendingTeachers.filter(teacher => teacher._id !== teacherId)
+                            );
+                            }
+                        } else {
+                            toast.success('Teacher rejected successfully');
+                        }
                         queryClient.invalidateQueries('pendingTeachers');
                     },
                     onError: (error) => {
@@ -59,7 +69,7 @@ const VerifyTeacherPage = () => {
     };
     
     return (
-        <div className="container mx-auto px-4 py-8">
+        <div className="p-3 sm:p-6 max-w-6xl mx-auto">
             <h1 className="text-3xl font-bold mb-6">Teacher Verification</h1>
             
             {/* Search bar */}

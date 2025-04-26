@@ -78,6 +78,7 @@ const ApplicationForm = () => {
         formDataToSubmit.append('content', formData.content);
         formDataToSubmit.append('rollNo', formData.rollNo);
         
+        // Append all files to the FormData for multiple file upload
         files.forEach(file => {
             formDataToSubmit.append('files', file);
         });
@@ -224,7 +225,7 @@ const ApplicationForm = () => {
                                         <span className="font-semibold">Click to upload</span> or drag and drop
                                     </p>
                                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                                        Images, PDFs, Word docs, Excel (Max 10MB)
+                                        Allowed files: Images (JPG, PNG, GIF), PDFs, Word documents (DOC, DOCX), Excel files (XLS, XLSX) - Max 10MB
                                     </p>
                                 </div>
                                 <input 
@@ -351,14 +352,14 @@ const ApplicationForm = () => {
                         <button 
                             type="button" 
                             onClick={togglePreview} 
-                            className="btn btn-outline transition-colors duration-200"
+                            className="btn btn-outline hover:bg-gradient-to-r hover:from-green-500 hover:to-emerald-500 hover:text-white hover:border-transparent transition-colors duration-200"
                         >
                             Edit Application
                         </button>
                         <button 
                             type="button" 
                             onClick={handleSubmit} 
-                            className="btn btn-primary transition-colors duration-200"
+                            className="btn btn-primary hover:bg-gradient-to-r hover:from-green-500 hover:to-emerald-500 hover:text-white hover:border-transparent transition-colors duration-200"
                             disabled={createApplication.isLoading}
                         >
                             {createApplication.isLoading ? 'Submitting...' : 'Submit Application'}

@@ -59,7 +59,7 @@ const ScrollToTop = ({ scrollContainerId }) => {
       whileHover={{ scale: 1.1 }}
       whileTap={{ scale: 0.95 }}
       onClick={scrollToTop}
-      className="fixed bottom-6 right-6 p-3 bg-primary text-emerald-500 rounded-full shadow-lg hover:bg-primary/90 transition-colors z-[1000] flex items-center justify-center"
+      className="fixed md:bottom-10 md:right-12 bottom-6 right-6 p-3 bg-primary text-emerald-500 rounded-full shadow-lg hover:bg-primary/90 transition-colors z-[1000] flex items-center justify-center"
       style={{ 
         display: isVisible ? 'flex' : 'none',
       }}

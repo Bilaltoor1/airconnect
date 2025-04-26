@@ -84,10 +84,12 @@ const AnnouncementItem = ({ announcement }) => {
         
         {/* Display media if available */}
         {announcement.media && announcement.media.length > 0 && (
-          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
-            {announcement.media.slice(0, expanded ? announcement.media.length : 1).map((media, index) => (
-              <MediaDisplay key={index} media={media} />
-            ))}
+          <div className="mt-4 flex justify-center">
+            <div className={`${announcement.media.length > 1 ? 'grid grid-cols-1 md:grid-cols-2 gap-3 w-full' : 'max-w-md mx-auto max-h-[400px] overflow-hidden'}`}>
+              {announcement.media.slice(0, expanded ? announcement.media.length : 1).map((media, index) => (
+                <MediaDisplay key={index} media={media} className="rounded-lg" />
+              ))}
+            </div>
           </div>
         )}
         

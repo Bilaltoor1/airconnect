@@ -1,5 +1,5 @@
 import {useParams, useNavigate, useLocation} from 'react-router-dom';
-import {useState, useEffect, useRef} from 'react';
+import React, {useState, useEffect, useRef, forwardRef} from 'react';
 import {useApplication, useUpdateApplicationByStudent, useAddComment, useApplicationComments, useUpdateApplicationByAdvisor, useUpdateApplicationByCoordinator} from '@/hooks/useApplication';
 import {getStatusColor, getStatusDisplayText} from '@/utils/applicationStatusColors';
 import {motion} from 'framer-motion';
@@ -9,8 +9,170 @@ import UserAvatar from '@/components/UserAvatar';
 import { Printer, Download, ArrowLeft } from 'lucide-react';
 import { useReactToPrint } from 'react-to-print';
 import html2pdf from 'html2pdf.js';
-import ApplicationDetails from '@/components/ApplicationDetails';
 import MediaDisplay from '@/components/MediaDisplay';
+
+// Create a dedicated printable component
+const ApplicationPrintContent = forwardRef(({ application, formatDate }, ref) => {
+  if (!application) return null;
+  
+  return (
+    <div ref={ref} className="print-document">
+      {/* University Header */}
+      <div className="flex justify-between items-center border-b-2 border-primary pb-4 mb-6">
+        <div className="flex items-center justify-center w-full">
+          <img src="/aulogo.png" alt="Air University Logo" className="h-16 mr-4" />
+          <div>
+            <h1 className="text-2xl font-bold text-primary">AIR UNIVERSITY MULTAN</h1>
+            <p>Excellence in Education and Research</p>
+          </div>
+        </div>
+      </div>
+      
+      <div className="text-right mb-6">
+        <p className="font-medium">Date: {formatDate(new Date())}</p>
+      </div>
+      
+      <div className="mb-6">
+        <p><span className="font-semibold">To:</span> The Advisor/Coordinator</p>
+        <p><span className="font-semibold">Subject:</span> {application.reason}</p>
+      </div>
+      
+      <div className="mb-6">
+        <p className="mb-1"><span className="font-semibold">Student Name:</span> {application.name}</p>
+        <p className="mb-1"><span className="font-semibold">Roll Number:</span> {application.rollNo}</p>
+        <p className="mb-1"><span className="font-semibold">Email:</span> {application.email}</p>
+      </div>
+      
+      <div className="mb-10">
+        <p className="mb-2 font-semibold">Content:</p>
+        <div className="border border-base-300 p-4 rounded min-h-[200px] whitespace-pre-line">
+          {application.content}
+        </div>
+      </div>
+      
+      <div className="mb-8">
+        <p>Sincerely,</p>
+        <p className="font-semibold">{application.name}</p>
+        <p>Student</p>
+      </div>
+      
+      {/* Application Processing Information - MOVED BEFORE SUPPORTING DOCUMENTS */}
+      <div className="mt-8 border-t pt-4">
+        <h3 className="text-lg font-semibold mb-4">Application Processing:</h3>
+        
+        <div className="space-y-4">
+          {application.applicationStatus === 'Pending' ? (
+            <div className="p-3 rounded border">
+              <p className="font-medium">Application is pending review by advisor.</p>
+            </div>
+          ) : application.applicationStatus === 'Forward to Coordinator' || 
+             application.applicationStatus === 'Approved by Coordinator' || 
+             application.applicationStatus === 'Rejected' ? (
+            <div className="p-3 rounded border">
+              <p className="font-medium">Reviewed by Advisor: {application.advisor.name}</p>
+              {application.signature && <p>Digitally signed on {formatDate(application.updatedAt || new Date())}</p>}
+              
+              {application.applicationStatus === 'Forward to Coordinator' && (
+                <p className="mt-2">Forwarded to coordinator for final approval.</p>
+              )}
+              
+              {application.applicationStatus === 'Approved by Coordinator' && (
+                <div className="mt-2">
+                  <p className="font-medium">Approved by Coordinator: {application.coordinator.name}</p>
+                  <p>Final approval on {formatDate(application.updatedAt || new Date())}</p>
+                </div>
+              )}
+              
+              {application.applicationStatus === 'Rejected' && (
+                <div className="mt-2">
+                  <p className="font-medium">Application Rejected</p>
+                  {application.coordinatorComments ? (
+                    <p>Rejected by Coordinator: {application.coordinator.name}</p>
+                  ) : (
+                    <p>Rejected by Advisor: {application.advisor.name}</p>
+                  )}
+                </div>
+              )}
+            </div>
+          ) : null}
+        </div>
+      </div>
+      
+      {/* Display media attachments if any - NOW AFTER APPLICATION PROCESSING */}
+      {application.media && application.media.length > 0 && (
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold mb-3">Supporting Documents:</h3>
+          <div className="grid grid-cols-1 gap-4">
+            {application.media.map((mediaUrl, index) => {
+              // Determine if it's an image by extension
+              const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(mediaUrl);
+              if (isImage) {
+                return (
+                  <div key={index} className="border p-2 rounded">
+                    <img 
+                      src={mediaUrl} 
+                      alt={`Supporting document ${index + 1}`} 
+                      className="max-w-full h-auto max-h-[200px] object-contain mx-auto"
+                    />
+                    <p className="text-center mt-2 text-sm">Document {index + 1}</p>
+                  </div>
+                );
+              } else {
+                return (
+                  <div key={index} className="border p-4 rounded text-center">
+                    <p>Attachment {index + 1}: {mediaUrl.split('/').pop()}</p>
+                    <p className="text-sm mt-1">(Non-image document)</p>
+                  </div>
+                );
+              }
+            })}
+          </div>
+        </div>
+      )}
+      
+      {/* Comments Section - Moved to the bottom */}
+      {(application.advisorComments || application.coordinatorComments) && (
+        <div className="mt-8 border-t pt-4 page-break-before">
+          <h3 className="text-lg font-semibold mb-4">Official Comments:</h3>
+          
+          {application.advisorComments && (
+            <div className="mb-4 p-3 rounded border">
+              <p className="font-medium">Advisor Comment:</p>
+              <p>{application.advisorComments}</p>
+            </div>
+          )}
+          
+          {application.coordinatorComments && (
+            <div className="p-3 rounded border">
+              <p className="font-medium">Coordinator Comment:</p>
+              <p>{application.coordinatorComments}</p>
+            </div>
+          )}
+        </div>
+      )}
+      
+      {/* Print footer */}
+      <div className="mt-8 pt-4 text-center text-sm">
+        <p>Air University Multan</p>
+        <p>Printed on {formatDate(new Date())}</p>
+      </div>
+      
+      {/* Add print styles to ensure proper printing */}
+      <style type="text/css" media="print">{`
+        @page { size: portrait; margin: 15mm; }
+        .print-document { font-size: 12pt; }
+        .page-break-before { page-break-before: always; }
+        img { max-width: 100%; height: auto; }
+        
+        /* Remove any host information */
+        a[href^="http://localhost"],
+        a[href^="https://localhost"] {
+          display: none !important;
+        }
+      `}</style>
+    </div>
+  );
+});
 
 const ApplicationDetail = () => {
     const {id} = useParams();
@@ -20,6 +182,7 @@ const ApplicationDetail = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const contentRef = useRef(null);
+    const printRef = useRef(null);
     
     const updateApplication = useUpdateApplicationByStudent();
     const updateApplicationByAdvisor = useUpdateApplicationByAdvisor();
@@ -95,10 +258,12 @@ const ApplicationDetail = () => {
         });
     };
     
+    // Updated print handler using latest API
     const handlePrint = useReactToPrint({
-        content: () => contentRef.current,
+        contentRef: printRef, // Pass the ref directly in the options
         documentTitle: `Application_${application?._id || 'application'}`,
-        onBeforeGetContent: () => {
+        onBeforePrint: () => {
+            console.log("Preparing document for printing...");
             const loadingToast = toast.loading("Preparing document for printing...");
             return new Promise((resolve) => {
                 setTimeout(() => {
@@ -107,62 +272,54 @@ const ApplicationDetail = () => {
                 }, 1000);
             });
         },
-        onPrintError: (error) => {
-            console.error("Print error:", error);
+        onAfterPrint: () => {
+            console.log("Print completed or canceled");
+            toast.success("Document sent to printer");
+        },
+        onPrintError: (errorLocation, error) => {
+            console.error(`Print error at ${errorLocation}:`, error);
             toast.error("Failed to print. Please try downloading as PDF instead.");
         },
-        removeAfterPrint: true,
         pageStyle: `
+            @page {
+                size: A4 portrait;
+                margin: 15mm;
+            }
             @media print {
-                body * {
-                    display: none !important;
-                }
-                .printable-content, .printable-content * {
-                    display: block !important;
-                    visibility: visible !important;
-                }
-                .printable-content {
-                    position: static !important;
-                    width: 100% !important;
-                    margin: 0 !important;
-                    padding: 0 !important;
-                    box-shadow: none !important;
-                    border: none !important;
-                    background: white !important;
+                body {
                     -webkit-print-color-adjust: exact;
-                    color-adjust: exact;
                     print-color-adjust: exact;
                 }
-                @page {
-                    size: A4 portrait;
-                    margin: 10mm;
+                
+                .print-document {
+                    display: block !important;
+                    page-break-inside: avoid;
+                    page-break-after: auto;
+                }
+                
+                /* Hide all other content when printing */
+                body > *:not(.print-document) {
+                    display: none !important;
                 }
             }
         `,
     });
     
+    // Improved PDF generation
     const handleDownloadPDF = () => {
-        const element = contentRef.current;
-        if (!element) {
+        if (!printRef.current) {
             toast.error("Content not ready for PDF generation");
             return;
         }
         
         const loadingToast = toast.loading("Generating PDF...");
         
-        // Clone the element to avoid modifying the displayed content
-        const clonedElement = element.cloneNode(true);
-        
-        // Apply some additional styling for better PDF output
-        const elementStyles = window.getComputedStyle(element);
-        clonedElement.style.width = '100%';
-        clonedElement.style.padding = '20px';
-        clonedElement.style.backgroundColor = elementStyles.backgroundColor || '#ffffff';
+        const element = printRef.current;
         
         const opt = {
-            margin: [10, 10, 10, 10],
-            filename: `Application_${application?._id || 'download'}.pdf`,
-            image: { type: 'jpeg', quality: 0.98 },
+            margin: [15, 15, 15, 15], // Consistent margins: top, right, bottom, left (in mm)
+            filename: `Application_${application?._id || 'application'}.pdf`,
+            image: { type: 'jpeg', quality: 1.0 },
             html2canvas: { 
                 scale: 2, 
                 useCORS: true,
@@ -173,29 +330,32 @@ const ApplicationDetail = () => {
                 unit: 'mm', 
                 format: 'a4', 
                 orientation: 'portrait',
-                compress: true 
+                compress: true,
+                pdfQuality: 1.0
             }
         };
         
-        // Use promise-based approach for better error handling
-        setTimeout(() => {
-            html2pdf()
-                .from(clonedElement)
-                .set(opt)
-                .outputPdf()
-                .then(pdf => {
-                    return html2pdf().from(clonedElement).set(opt).save();
-                })
-                .then(() => {
-                    toast.dismiss(loadingToast);
-                    toast.success("PDF downloaded successfully");
-                })
-                .catch(error => {
-                    console.error("PDF generation error:", error);
-                    toast.dismiss(loadingToast);
-                    toast.error("Failed to download PDF. Try again or use Print instead.");
-                });
-        }, 300); // Small delay to ensure the UI is updated before PDF generation
+        // Process element to remove host-related info before PDF generation
+        const processedElement = element.cloneNode(true);
+        const links = processedElement.querySelectorAll('a[href^="http://localhost"], a[href^="https://localhost"]');
+        links.forEach(link => {
+            link.style.display = 'none';
+        });
+        
+        // Use html2pdf with promise handling
+        html2pdf()
+            .from(processedElement)
+            .set(opt)
+            .save()
+            .then(() => {
+                toast.dismiss(loadingToast);
+                toast.success("PDF downloaded successfully");
+            })
+            .catch(error => {
+                console.error("PDF generation error:", error);
+                toast.dismiss(loadingToast);
+                toast.error("Failed to download PDF. Please try again.");
+            });
     };
     
     const handleApproveByAdvisor = () => {
@@ -370,20 +530,29 @@ const ApplicationDetail = () => {
                     <div className="flex gap-2">
                         <button 
                             onClick={handlePrint}
-                            className="btn btn-sm btn-outline flex items-center gap-1 hover:bg-gradient-to-r hover:from-green-500 hover:to-emerald-500 hover:text-white hover:border-transparent"
+                            className="btn btn-sm text-white flex items-center gap-1 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-lime-400 hover:to-lime-500 transition-all duration-300"
                         >
                             <Printer size={16} />
                             Print
                         </button>
                         <button 
                             onClick={handleDownloadPDF}
-                            className="btn btn-sm btn-outline flex items-center gap-1 hover:bg-gradient-to-r hover:from-green-500 hover:to-emerald-500 hover:text-white hover:border-transparent"
+                            className="btn btn-sm text-white flex items-center gap-1 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-lime-400 hover:to-lime-500 transition-all duration-300"
                         >
                             <Download size={16} />
                             Download PDF
                         </button>
                     </div>
                 )}
+            </div>
+            
+            {/* Printable component hidden by default */}
+            <div style={{ display: 'none' }}>
+                <ApplicationPrintContent 
+                    ref={printRef}
+                    application={application}
+                    formatDate={formatDate}
+                />
             </div>
             
             <h1 className="text-2xl font-bold mb-6">Application Details</h1>
@@ -406,9 +575,12 @@ const ApplicationDetail = () => {
                 >
                     {/* University Header */}
                     <div className="flex justify-between items-center border-b-2 border-primary pb-4 mb-6">
-                        <div className="text-center w-full">
-                            <h1 className="text-2xl font-bold text-primary">AIR UNIVERSITY MULTAN</h1>
-                            <p className="text-base-content/70">Excellence in Education and Research</p>
+                        <div className="flex items-center justify-center w-full">
+                            <img src="/aulogo.png" alt="Air University Logo" className="h-16 mr-4" />
+                            <div>
+                                <h1 className="text-2xl font-bold text-primary">AIR UNIVERSITY MULTAN</h1>
+                                <p className="text-base-content/70">Excellence in Education and Research</p>
+                            </div>
                         </div>
                     </div>
                     
@@ -456,25 +628,13 @@ const ApplicationDetail = () => {
                         )}
                     </div>
                     
-                    {/* Display media attachments if any */}
-                    {application.media && application.media.length > 0 && (
-                        <div className="mb-6">
-                            <h3 className="text-lg font-semibold mb-3">Supporting Documents</h3>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                                {application.media.map((mediaUrl, index) => (
-                                    <MediaDisplay key={index} media={mediaUrl} />
-                                ))}
-                            </div>
-                        </div>
-                    )}
-                    
                     <div className="mb-8">
                         <p>Sincerely,</p>
                         <p className="font-semibold">{application.name}</p>
                         <p>Student</p>
                     </div>
                     
-                    {/* Application Processing Information */}
+                    {/* Application Processing Information - MOVED BEFORE SUPPORTING DOCUMENTS */}
                     <div className="mt-8 border-t pt-4">
                         <h3 className="text-lg font-semibold mb-4">Application Processing:</h3>
                         
@@ -513,6 +673,18 @@ const ApplicationDetail = () => {
                             ) : null}
                         </div>
                     </div>
+                    
+                    {/* Display media attachments if any - NOW AFTER APPLICATION PROCESSING */}
+                    {application.media && application.media.length > 0 && (
+                        <div className="mb-6">
+                            <h3 className="text-lg font-semibold mb-3">Supporting Documents</h3>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                                {application.media.map((mediaUrl, index) => (
+                                    <MediaDisplay key={index} media={mediaUrl} />
+                                ))}
+                            </div>
+                        </div>
+                    )}
                     
                     {/* Comments Section */}
                     {(application.advisorComments || application.coordinatorComments) && (

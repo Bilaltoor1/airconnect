@@ -42,19 +42,42 @@ const storage = multer.diskStorage({
 const fileFilter = (req, file, cb) => {
     // Accept images, PDFs, docs, and other common file types
     const allowedTypes = [
-        'image/jpeg', 'image/png', 'image/gif', 
+        // Images
+        'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml', 'image/bmp', 'image/tiff',
+        
+        // PDFs
         'application/pdf', 
+        
+        // Word documents
         'application/msword', 
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        
+        // Excel files
         'application/vnd.ms-excel',
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        
+        // Alternative MIME types that some browsers/systems might use
+        'application/octet-stream'
     ];
     
+    console.log(`File upload attempt: ${file.originalname}, MIME: ${file.mimetype}`);
+    
+    // Check MIME type first
     if (allowedTypes.includes(file.mimetype)) {
-        cb(null, true);
-    } else {
-        cb(new Error('Invalid file type. Only images, PDFs, and documents are allowed.'), false);
+        return cb(null, true);
     }
+    
+    // Fallback to extension checking if MIME type check fails
+    const ext = file.originalname.split('.').pop().toLowerCase();
+    const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'pdf', 'doc', 'docx', 'xls', 'xlsx'];
+    
+    if (allowedExtensions.includes(ext)) {
+        console.log(`Accepting file based on extension: ${ext}`);
+        return cb(null, true);
+    }
+    
+    console.log(`Rejected file: ${file.originalname}, MIME: ${file.mimetype}, Extension: ${ext}`);
+    cb(new Error('Invalid file type. Only images, PDFs, and documents are allowed.'), false);
 };
 
 const upload = multer({ 

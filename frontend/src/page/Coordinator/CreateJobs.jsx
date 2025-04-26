@@ -137,7 +137,7 @@ const CreateJob = () => {
     }
 
     return (
-        <div className="max-w-4xl mx-auto my-8 px-4">
+        <div className="p-3 sm:p-6 max-w-6xl mx-auto">
             <div className="bg-base-100 rounded-xl shadow-lg overflow-hidden">
                 <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-6">
                     <h2 className="text-2xl font-bold text-white flex items-center">

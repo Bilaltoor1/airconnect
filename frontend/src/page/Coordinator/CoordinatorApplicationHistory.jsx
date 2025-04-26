@@ -108,7 +108,7 @@ const CoordinatorApplicationHistory = () => {
     };
 
     return (
-        <div className="mx-auto max-w-screen-2xl p-4 sm:px-6">
+        <div className="p-3 sm:p-6 max-w-6xl mx-auto">
             <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
                 <div>
                     <h1 className="text-2xl font-bold uppercase">Applications I've Processed</h1>

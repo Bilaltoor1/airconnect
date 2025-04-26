@@ -184,12 +184,19 @@ export const useVerifyTeacher = () => {
             }
         }),
         {
-            onSuccess: () => {
+            onSuccess: (response) => {
                 queryClient.invalidateQueries('pendingTeachers');
                 queryClient.invalidateQueries('teachers');
+                
+                // If we deleted a teacher, make sure it's immediately reflected in UI
+                if (response.data.deleted) {
+                    // Force refetch the pending teachers to remove from the list
+                    queryClient.refetchQueries('pendingTeachers');
+                }
             },
             onError: (error) => {
                 console.error(error);
+                toast.error(error.response?.data?.message || 'Failed to process teacher verification');
             }
         }
     );

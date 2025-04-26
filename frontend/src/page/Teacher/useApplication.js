@@ -36,6 +36,7 @@ export const useUpdateApplicationByAdvisor = () => {
     return useMutation(updateApplicationByAdvisor, {
         onSuccess: () => {
             queryClient.invalidateQueries('applications');
+            queryClient.invalidateQueries('historyofApplications');
         },
         onError: (error) => {
             console.error('Application update by advisor failed:', error.response?.data || error.message);

@@ -8,7 +8,6 @@ import {
 } from '../api/announcement';
 import {toast} from "react-hot-toast";
 
-// `hooks/useAnnouncement.js`
 export const useCreateAnnouncement = () => {
     const queryClient = useQueryClient();
 

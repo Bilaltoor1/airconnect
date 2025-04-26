@@ -123,16 +123,27 @@ export const createApplication = async (req, res) => {
         let mediaUrls = [];
         if (req.files && req.files.length > 0) {
             try {
-                console.log('Uploading application files to Cloudinary...');
+                console.log(`Uploading ${req.files.length} application files to Cloudinary...`);
+                // Log file information for debugging
+                req.files.forEach(file => {
+                    console.log(`File: ${file.originalname}, MIME: ${file.mimetype}, Size: ${file.size} bytes`);
+                });
+                
                 const uploadPromises = req.files.map(file => 
                     uploadToCloudinaryWithRetry(file.path, {
                         folder: 'applications',
                         resource_type: 'auto' // Auto-detect file type
+                    }).catch(err => {
+                        console.error(`Error uploading ${file.originalname}:`, err);
+                        return null; // Return null for failed uploads
                     })
                 );
                 
                 const uploadResults = await Promise.all(uploadPromises);
-                mediaUrls = uploadResults.map(result => result.secure_url);
+                // Filter out null results from failed uploads
+                mediaUrls = uploadResults.filter(result => result !== null).map(result => result.secure_url);
+                
+                console.log(`Successfully uploaded ${mediaUrls.length} of ${req.files.length} files`);
                 
                 // Clean up temp files
                 req.files.forEach(file => {
@@ -271,7 +282,7 @@ export const updateApplicationByStudent = async (req, res) => {
         // Handle file uploads if any
         if (req.files && req.files.length > 0) {
             try {
-                console.log('Uploading additional files to Cloudinary...');
+                console.log(`Uploading ${req.files.length} additional files to Cloudinary...`);
                 const uploadPromises = req.files.map(file => 
                     uploadToCloudinaryWithRetry(file.path, {
                         folder: 'applications',
