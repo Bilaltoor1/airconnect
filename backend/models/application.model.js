@@ -25,6 +25,8 @@ const applicationSchema = new mongoose.Schema({
     hiddenFromStudent: { type: Boolean, default: false },
     hiddenFromAdvisor: { type: Boolean, default: false },
     hiddenFromCoordinator: { type: Boolean, default: false }
+}, {
+    timestamps: true // This adds createdAt and updatedAt fields automatically
 });
 
 const Application = mongoose.model('Application', applicationSchema);

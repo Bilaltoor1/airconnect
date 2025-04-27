@@ -96,23 +96,23 @@ const VerifyTeacherPage = () => {
                     <p>Failed to load pending teachers. Please try again later.</p>
                 </div>
             ) : filteredTeachers?.length === 0 ? (
-                <div className="text-center py-8 bg-gray-50 rounded-lg">
-                    <p className="text-gray-500">No teachers pending verification.</p>
+                <div className="text-center py-8 bg-base-200 rounded-lg">
+                    <p className="text-base-content/70">No teachers pending verification.</p>
                 </div>
             ) : (
-                <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
+                <div className="overflow-hidden rounded-xl border border-base-300 bg-base-100 shadow-sm">
+                    <table className="min-w-full divide-y divide-base-300">
+                        <thead className="bg-base-200">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Registration Date</th>
-                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-base-content/70 uppercase tracking-wider">Name</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-base-content/70 uppercase tracking-wider">Email</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-base-content/70 uppercase tracking-wider">Registration Date</th>
+                                <th className="px-6 py-3 text-right text-xs font-medium text-base-content/70 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
+                        <tbody className="bg-base-100 divide-y divide-base-300">
                             {filteredTeachers?.map((teacher) => (
-                                <tr key={teacher._id} className="hover:bg-gray-50">
+                                <tr key={teacher._id} className="hover:bg-base-200 transition-colors">
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex items-center">
                                             {teacher.profileImage ? (
@@ -122,23 +122,23 @@ const VerifyTeacherPage = () => {
                                                     className="h-10 w-10 rounded-full mr-3 object-cover"
                                                 />
                                             ) : (
-                                                <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center mr-3">
-                                                    <span className="text-gray-500 font-semibold">
+                                                <div className="h-10 w-10 rounded-full bg-base-200 flex items-center justify-center mr-3">
+                                                    <span className="text-base-content/70 font-semibold">
                                                         {teacher.name.charAt(0).toUpperCase()}
                                                     </span>
                                                 </div>
                                             )}
                                             <div>
-                                                <div className="text-sm font-medium text-gray-900">{teacher.name}</div>
-                                                <div className="text-xs text-gray-500">{teacher.section || 'No section assigned'}</div>
+                                                <div className="text-sm font-medium text-base-content">{teacher.name}</div>
+                                                <div className="text-xs text-base-content/70">{teacher.section || 'No section assigned'}</div>
                                             </div>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-sm text-gray-900">{teacher.email}</div>
+                                        <div className="text-sm text-base-content">{teacher.email}</div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-sm text-gray-900">
+                                        <div className="text-sm text-base-content">
                                             {new Date(teacher.createdAt).toLocaleDateString()}
                                         </div>
                                     </td>

@@ -26,7 +26,8 @@ export const createApplication = async (applicationData) => {
 };
 
 export const fetchHistoryofApplication = async (params) => {
-    const response = await axios.get(`${API_URL}/history`, {params});
+    console.log('Fetching applications with params:', params); // Debug log
+    const response = await axios.get(`${API_URL}/history`, { params });
     return response.data;
 };
 

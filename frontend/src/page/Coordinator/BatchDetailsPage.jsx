@@ -76,16 +76,16 @@ const DataTable = ({ columns, data, emptyMessage }) => {
     });
 
     return (
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+        <div className="overflow-hidden rounded-xl border border-base-300 bg-base-100 shadow-sm">
             <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
+                <table className="min-w-full divide-y divide-base-300">
+                    <thead className="bg-base-200">
                         {table.getHeaderGroups().map(headerGroup => (
                             <tr key={headerGroup.id}>
                                 {headerGroup.headers.map(header => (
                                     <th
                                         key={header.id}
-                                        className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
+                                        className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-base-content/70"
                                     >
                                         {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
                                     </th>
@@ -93,12 +93,12 @@ const DataTable = ({ columns, data, emptyMessage }) => {
                             </tr>
                         ))}
                     </thead>
-                    <tbody className="divide-y divide-gray-200 bg-white">
+                    <tbody className="divide-y divide-base-300 bg-base-100">
                         {table.getRowModel().rows.length ? (
                             table.getRowModel().rows.map(row => (
-                                <tr key={row.id} className="hover:bg-gray-50 transition-colors">
+                                <tr key={row.id} className="hover:bg-base-200 transition-colors">
                                     {row.getVisibleCells().map(cell => (
-                                        <td key={cell.id} className="px-6 py-4 text-sm text-gray-700">
+                                        <td key={cell.id} className="px-6 py-4 text-sm text-base-content">
                                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
                                         </td>
                                     ))}
@@ -106,7 +106,7 @@ const DataTable = ({ columns, data, emptyMessage }) => {
                             ))
                         ) : (
                             <tr>
-                                <td colSpan={columns.length} className="px-6 py-8 text-center text-sm text-gray-500">
+                                <td colSpan={columns.length} className="px-6 py-8 text-center text-sm text-base-content/70">
                                     {emptyMessage || "No records found."}
                                 </td>
                             </tr>

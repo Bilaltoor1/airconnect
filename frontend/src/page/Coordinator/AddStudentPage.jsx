@@ -77,16 +77,16 @@ const DataTable = ({ columns, data, filterValue, setFilterValue }) => {
                 </div>
             </div>
             
-            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+            <div className="overflow-hidden rounded-xl border border-base-300 bg-base-100 shadow-sm">
                 <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
+                    <table className="min-w-full divide-y divide-base-300">
+                        <thead className="bg-base-200">
                             {table.getHeaderGroups().map(headerGroup => (
                                 <tr key={headerGroup.id}>
                                     {headerGroup.headers.map(header => (
                                         <th 
                                             key={header.id} 
-                                            className="px-3 sm:px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
+                                            className="px-3 sm:px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-base-content/70"
                                         >
                                             {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
                                         </th>
@@ -94,12 +94,12 @@ const DataTable = ({ columns, data, filterValue, setFilterValue }) => {
                                 </tr>
                             ))}
                         </thead>
-                        <tbody className="divide-y divide-gray-200 bg-white">
+                        <tbody className="divide-y divide-base-300 bg-base-100">
                             {filteredData.length ? (
                                 filteredData.map((row, i) => (
-                                    <tr key={row._id || i} className="hover:bg-gray-50 transition-colors">
+                                    <tr key={row._id || i} className="hover:bg-base-200 transition-colors">
                                         {columns.map((column, columnIndex) => (
-                                            <td key={columnIndex} className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-700 truncate max-w-[150px] sm:max-w-none">
+                                            <td key={columnIndex} className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-base-content truncate max-w-[150px] sm:max-w-none">
                                                 {column.accessorKey ? row[column.accessorKey] : flexRender(column.cell, { row: { original: row } })}
                                             </td>
                                         ))}
@@ -107,11 +107,11 @@ const DataTable = ({ columns, data, filterValue, setFilterValue }) => {
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan={columns.length} className="px-6 py-8 text-center text-sm text-gray-500">
+                                    <td colSpan={columns.length} className="px-6 py-8 text-center text-sm text-base-content/70">
                                         <div className="flex flex-col items-center gap-2">
                                             <Info size={24} className="text-amber-500" />
                                             <p>No students without a batch found</p>
-                                            <p className="text-xs text-gray-400">All students are already assigned to batches</p>
+                                            <p className="text-xs text-base-content/50">All students are already assigned to batches</p>
                                         </div>
                                     </td>
                                 </tr>

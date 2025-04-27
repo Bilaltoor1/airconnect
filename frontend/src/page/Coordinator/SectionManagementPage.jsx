@@ -131,17 +131,17 @@ const SectionManagementPage = () => {
                 <h3 className="text-xl font-semibold mb-4">Section List</h3>
                 <div className="overflow-x-auto">
                     <table className="w-full text-left">
-                        <thead className="bg-gray-50 dark:bg-gray-700">
+                        <thead className="bg-base-200 dark:bg-base-300">
                             <tr className="text-xs font-medium uppercase tracking-wider">
-                                <th className="px-6 py-3 rounded-tl-lg">Section Name</th>
-                                <th className="px-6 py-3 rounded-tr-lg">Actions</th>
+                                <th className="px-6 py-3 rounded-tl-lg text-base-content/70">Section Name</th>
+                                <th className="px-6 py-3 rounded-tr-lg text-base-content/70">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {sections?.map((section, index) => (
                                 <tr 
                                     key={section._id} 
-                                    className={`text-sm ${index % 2 === 0 ? 'bg-gray-50 dark:bg-gray-800/50' : ''} hover:bg-gray-100 dark:hover:bg-gray-700/70 transition-colors`}
+                                    className={`text-sm ${index % 2 === 0 ? 'bg-base-200/50' : ''} hover:bg-base-200 transition-colors`}
                                 >
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         {editingSectionId === section._id ? (
@@ -156,10 +156,10 @@ const SectionManagementPage = () => {
                                             />
                                         ) : (
                                             <div className="flex items-center">
-                                                <Flag size={16} className="mr-2 text-gray-500" />
-                                                <span className="font-medium">{section.section}</span>
+                                                <Flag size={16} className="mr-2 text-base-content/60" />
+                                                <span className="font-medium text-base-content">{section.section}</span>
                                                 {section.section === 'all' && (
-                                                    <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                    <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
                                                         Default
                                                     </span>
                                                 )}

@@ -2,27 +2,44 @@ import { useHistoryofApplications, useClearAdvisorApplicationHistory, useHideAdv
 import { useAuth } from '@/context/AuthContext.jsx';
 import { getStatusColor, getStatusDisplayText } from '@/utils/applicationStatusColors';
 import { useNavigate } from 'react-router-dom';
-import { Trash2, ExternalLink, Check, Square, CheckSquare } from 'lucide-react';
+import { Trash2, Check, Square, CheckSquare, ArrowDown, ArrowUp, CalendarClock } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import StatusLegend from '@/components/StatusLegend';
 import ApplicationStatusFilter from '@/components/ApplicationStatusFilter';
 
 const TeacherApplicationHistory = () => {
     const { user } = useAuth();
-    const { data: applications = [], isLoading, error } = useHistoryofApplications({ advisor: user._id });
+    const [sortOrder, setSortOrder] = useState('newest'); // Default sorting is newest first
+    const [activeFilter, setActiveFilter] = useState('all');
+    const [selectionMode, setSelectionMode] = useState(false);
+    const [selectedApplications, setSelectedApplications] = useState([]);
+    
+    // Fetch applications with sorting parameter
+    const { data: applications = [], isLoading, error, refetch } = useHistoryofApplications({ 
+        advisor: user._id,
+        sort: sortOrder 
+    });
+    
     const clearHistory = useClearAdvisorApplicationHistory();
     const hideApplication = useHideAdvisorApplication();
     const navigate = useNavigate();
-    
-    const [selectionMode, setSelectionMode] = useState(false);
-    const [selectedApplications, setSelectedApplications] = useState([]);
-    const [activeFilter, setActiveFilter] = useState('all');
 
+    // Refetch when sort order changes
+    useEffect(() => {
+        refetch();
+    }, [sortOrder, refetch]);
+    
     // Filter applications based on activeFilter
-    const filteredApplications = applications.filter(app => 
-        activeFilter === 'all' || app.applicationStatus === activeFilter
-    );
+    const filteredApplications = useMemo(() => 
+        applications.filter(app => 
+            activeFilter === 'all' || app.applicationStatus === activeFilter
+        ),
+    [applications, activeFilter]);
+
+    const handleSortChange = (order) => {
+        setSortOrder(order);
+    };
 
     if (isLoading) return <div className="flex justify-center items-center h-screen">Loading...</div>;
     if (error) return <div className="flex justify-center items-center h-screen">Error loading applications</div>;
@@ -119,6 +136,19 @@ const TeacherApplicationHistory = () => {
                 
                 {applications.length > 0 && (
                     <div className="flex flex-wrap gap-2">
+                        {/* Sort Order Dropdown */}
+                        <div className="dropdown dropdown-end">
+                            <div tabIndex={0} role="button" className="btn btn-sm btn-outline flex items-center gap-1">
+                                <CalendarClock size={16} />
+                                {sortOrder === 'newest' ? 'Newest First' : 'Oldest First'}
+                                {sortOrder === 'newest' ? <ArrowDown size={14} /> : <ArrowUp size={14} />}
+                            </div>
+                            <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+                                <li><a onClick={() => handleSortChange('newest')} className={sortOrder === 'newest' ? 'active' : ''}>Newest First</a></li>
+                                <li><a onClick={() => handleSortChange('oldest')} className={sortOrder === 'oldest' ? 'active' : ''}>Oldest First</a></li>
+                            </ul>
+                        </div>
+                        
                         {selectionMode ? (
                             <>
                                 <button 
@@ -230,7 +260,7 @@ const TeacherApplicationHistory = () => {
                             
                             <div className="flex justify-between">
                                 <button 
-                                    className="btn btn-sm btn-outline"
+                                    className="btn btn-sm"
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         handleClick(application._id);

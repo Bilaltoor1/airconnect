@@ -112,7 +112,7 @@ const CoordinatorApplicationPage = () => {
                                 <div className="flex justify-between">
                                     <button 
                                         onClick={() => handleViewDetails(application._id)}
-                                        className="btn btn-sm btn-outline"
+                                        className="btn btn-sm"
                                     >
                                         View Full Details
                                     </button>
@@ -130,14 +130,14 @@ const CoordinatorApplicationPage = () => {
                         ))}
                     </div>
                 ) : (
-                    <div className="text-center p-8 bg-gray-50 rounded-lg">
-                        <p className="text-gray-500">No applications match the selected filter.</p>
+                    <div className="text-center p-8 bg-base-200 rounded-lg">
+                        <p className="text-base-content/70">No applications match the selected filter.</p>
                     </div>
                 )
             ) : (
-                <div className="text-center p-8 bg-gray-50 rounded-lg">
-                    <h3 className="text-xl font-medium text-gray-700">No applications to review</h3>
-                    <p className="text-gray-500 mt-2">When advisors forward applications, they will appear here for review.</p>
+                <div className="text-center p-8 bg-base-200 rounded-lg">
+                    <h3 className="text-xl font-medium text-base-content">No applications to review</h3>
+                    <p className="text-base-content/70 mt-2">When advisors forward applications, they will appear here for review.</p>
                 </div>
             )}
             

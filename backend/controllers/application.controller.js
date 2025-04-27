@@ -11,7 +11,7 @@ import { uploadToCloudinaryWithRetry } from '../helpers/cloudinaryUpload.js';
 import fs from 'fs';
 
 export const fetchHistoryofApplication = async (req, res) => {
-    const { studentID, advisor, coordinator } = req.query;
+    const { studentID, advisor, coordinator, sort = 'newest' } = req.query;
     const query = {};
 
     // For students, show all their applications that aren't hidden
@@ -39,9 +39,21 @@ export const fetchHistoryofApplication = async (req, res) => {
         ];
     }
 
-    console.log(query);
+    console.log('Fetching application history with query:', query, 'sort:', sort);
     try {
+        // Check which field exists in the schema and use that for sorting
+        // This handles different naming conventions in the database
+        const testApp = await Application.findOne();
+        const dateField = testApp && testApp.createdAt ? 'createdAt' : 'created';
+        
+        // Determine sort order based on the field that exists
+        const sortOrder = {};
+        sortOrder[dateField] = sort === 'oldest' ? 1 : -1;
+        
+        console.log('Using sort order:', sortOrder);
+        
         const applications = await Application.find(query)
+            .sort(sortOrder)
             .populate('advisor', 'name email')
             .populate('coordinator', 'name email')
             .populate('studentID', 'name email');

@@ -160,26 +160,16 @@ export const createAdvisorActionNotification = async (application, advisor) => {
         console.log('ADVISOR ACTION NOTIFICATION:', {
             applicationId: application?._id,
             advisorId: advisor?._id,
-            studentId: application?.student,
+            studentId: application?.student || application?.studentID,
             coordinatorId: application?.coordinator,
-            advisorStatus: application?.advisorStatus,
             applicationStatus: application?.applicationStatus,
-            applicationFields: Object.keys(application || {})
+            advisorComments: application?.advisorComments ? 'Present' : 'None'
         });
         
         const notifications = [];
         
-        // Get the status from application, with fallbacks for different field names
-        let status;
-        if (application.advisorStatus) {
-            status = application.advisorStatus;
-        } else if (application.applicationStatus) {
-            status = application.applicationStatus;
-        } else if (application.status) {
-            status = application.status;
-        } else {
-            status = 'unknown';
-        }
+        // Get the status from application
+        const status = application.applicationStatus || 'unknown';
         
         console.log('Determined advisor action status:', status);
         
@@ -190,18 +180,19 @@ export const createAdvisorActionNotification = async (application, advisor) => {
         let statusText;
         let titleText;
         
-        if (statusLower.includes('approve') || statusLower === 'forwarded') {
-            statusText = 'approved';
-            titleText = 'Approved';
-        } else if (statusLower.includes('reject')) {
+        if (status === 'Forward to Coordinator') {
+            statusText = 'forwarded to coordinator for review';
+            titleText = 'Forwarded to Coordinator';
+        } else if (status === 'Rejected') {
             statusText = 'rejected';
             titleText = 'Rejected';
-        } else if (statusLower.includes('change') || statusLower.includes('request')) {
+        } else if (status === 'Pending' && application.advisorComments) {
+            // When status is Pending but there are advisor comments, it's a change request
             statusText = 'returned with requested changes';
             titleText = 'Changes Requested';
-        } else if (statusLower.includes('transit') || statusLower.includes('in_transit')) {
-            statusText = 'moved to in-transit status';
-            titleText = 'In Transit';
+        } else if (status === 'Pending') {
+            statusText = 'pending review';
+            titleText = 'Pending';
         } else {
             statusText = statusLower;
             titleText = status.charAt(0).toUpperCase() + statusLower.slice(1);
@@ -228,18 +219,16 @@ export const createAdvisorActionNotification = async (application, advisor) => {
             })
         );
         
-        // If approved or in transit, notify coordinator that action is needed
-        if ((statusLower.includes('approve') || statusLower.includes('transit')) && 
-            (application.coordinator || application.coordinatorID)) {
-            const coordinatorId = application.coordinator || application.coordinatorID;
-            
+        // For Forward to Coordinator status specifically, notify the coordinator
+        if (status === 'Forward to Coordinator' && application.coordinator) {
+            console.log('Sending notification to coordinator for forwarded application');
             notifications.push(
                 createNotification({
-                    recipient: coordinatorId,
+                    recipient: application.coordinator,
                     sender: advisor._id,
                     type: 'application_advisor_action',
                     title: 'Application Needs Review',
-                    message: `${advisor.name} has approved an application that needs your final review`,
+                    message: `${advisor.name} has forwarded an application that needs your final review`,
                     relatedId: application._id,
                 })
             );

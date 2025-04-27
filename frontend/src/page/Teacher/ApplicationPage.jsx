@@ -123,8 +123,8 @@ const TeacherApplicationPage = () => {
                                 
                                 {application.advisorComments && (
                                     <div className="mb-4">
-                                        <p className="font-medium mb-1 text-yellow-700">Your Previous Comment:</p>
-                                        <div className="bg-yellow-50 p-3 rounded text-sm">
+                                        <p className="font-medium mb-1 text-yellow-700 dark:text-yellow-500">Your Previous Comment:</p>
+                                        <div className="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded text-sm">
                                             {application.advisorComments}
                                         </div>
                                     </div>
@@ -133,7 +133,7 @@ const TeacherApplicationPage = () => {
                                 <div className="flex justify-between">
                                     <button 
                                         onClick={() => handleViewDetails(application._id)}
-                                        className="btn btn-sm btn-outline"
+                                        className="btn btn-sm btn-outline hover:bg-base-200 text-base-content hover:text-base-content"
                                     >
                                         View Full Details
                                     </button>
