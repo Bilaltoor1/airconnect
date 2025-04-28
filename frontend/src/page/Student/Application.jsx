@@ -15,6 +15,10 @@ const ApplicationForm = () => {
         rollNo: user.rollNo,
     });
     
+    const [validationErrors, setValidationErrors] = useState({
+        content: ''
+    });
+    
     const [showPreview, setShowPreview] = useState(false);
     const createApplication = useCreateApplication();
     const fileInputRef = useRef(null);
@@ -25,6 +29,10 @@ const ApplicationForm = () => {
     const handleChange = (e) => {
         const {name, value} = e.target;
         setFormData({...formData, [name]: value});
+        
+        if (name === 'content' && validationErrors.content) {
+            setValidationErrors({...validationErrors, content: ''});
+        }
     };
 
     const getFileIcon = (mimeType) => {
@@ -67,8 +75,25 @@ const ApplicationForm = () => {
         setFiles(prev => prev.filter((_, i) => i !== index));
     };
 
+    const validateForm = () => {
+        const errors = {};
+        const wordCount = formData.content.trim().split(/\s+/).filter(word => word !== '').length;
+        
+        if (wordCount < 20) {
+            errors.content = 'Application content must be at least 20 words long';
+        }
+        
+        setValidationErrors(errors);
+        return Object.keys(errors).length === 0;
+    };
+
     const handleSubmit = (e) => {
         e.preventDefault();
+        
+        if (!validateForm()) {
+            toast.error('Please fix the errors before submitting');
+            return;
+        }
         
         const formDataToSubmit = new FormData();
         formDataToSubmit.append('name', formData.name);
@@ -78,7 +103,6 @@ const ApplicationForm = () => {
         formDataToSubmit.append('content', formData.content);
         formDataToSubmit.append('rollNo', formData.rollNo);
         
-        // Append all files to the FormData for multiple file upload
         files.forEach(file => {
             formDataToSubmit.append('files', file);
         });
@@ -177,7 +201,7 @@ const ApplicationForm = () => {
                         </div>
                         <div className="form-control">
                             <label className="label">
-                                <span className="label-text font-medium">Application Type</span>
+                                <span className="label-text font-medium">Application Type <span className="text-red-500">*</span></span>
                             </label>
                             <select
                                 name="reason"
@@ -196,16 +220,23 @@ const ApplicationForm = () => {
                     
                     <div className="form-control">
                         <label className="label">
-                            <span className="label-text font-medium">Application Content</span>
+                            <span className="label-text font-medium">Application Content <span className="text-red-500">*</span></span>
                         </label>
                         <textarea
                             name="content"
-                            className="textarea textarea-bordered w-full h-60 bg-base-100 dark:bg-base-100"
+                            className={`textarea textarea-bordered w-full h-60 bg-base-100 dark:bg-base-100 ${
+                                validationErrors.content ? 'border-red-500' : ''
+                            }`}
                             value={formData.content}
                             onChange={handleChange}
-                            placeholder="Write your detailed application content here..."
+                            placeholder="Write your detailed application content here... (minimum 20 words)"
                             required
                         />
+                        {validationErrors.content && (
+                            <div className="text-red-500 text-sm mt-1">
+                                {validationErrors.content}
+                            </div>
+                        )}
                     </div>
                     
                     <div className="form-control">

@@ -159,7 +159,7 @@ const Sidebar = () => {
                                             className={`flex items-center justify-between rounded-md px-3 py-2.5 transition-all duration-200
                                                 ${(activeLink === item.link || item.children?.some(child => activeLink === child.link))
                                                     ? 'bg-gradient-to-r from-emerald-600 to-green-400 text-white shadow-md' 
-                                                    : 'hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                                                    : 'hover:bg-base-300'}`}
                                         >
                                             <Link 
                                                 to={item.link}
@@ -202,7 +202,7 @@ const Sidebar = () => {
                                                                     className={`flex items-center rounded-md px-3 py-2 transition-all duration-200
                                                                         ${activeLink === child.link 
                                                                             ? 'bg-gradient-to-r from-emerald-600 to-green-400 text-white shadow-md' 
-                                                                            : 'hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                                                                            : 'hover:bg-base-300'}`}
                                                                     onClick={() => setActiveLink(child.link)}
                                                                 >
                                                                     <child.icon className="w-4 h-4" />
@@ -223,7 +223,7 @@ const Sidebar = () => {
                                         className={`flex items-center rounded-md px-3 py-2.5 transition-all duration-200
                                             ${activeLink === item.link 
                                                 ? 'bg-gradient-to-r from-emerald-600 to-green-400 text-white shadow-md' 
-                                                : 'hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                                                : 'hover:bg-base-300'}`}
                                         onClick={() => setActiveLink(item.link)}
                                     >
                                         <item.icon className="w-5 h-5" />
