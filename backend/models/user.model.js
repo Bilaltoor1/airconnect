@@ -29,7 +29,9 @@ const userSchema = new mongoose.Schema({
     profileImage: {
         type: String,
         default: ''
-    }
+    },
+    resetPasswordToken: String,
+    resetPasswordExpire: Date
 }, { discriminatorKey: 'role' , timestamps : true});
 
 const User = mongoose.model('User', userSchema);

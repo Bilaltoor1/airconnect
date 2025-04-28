@@ -41,6 +41,8 @@ import { NotificationProvider } from './context/NotificationContext';
 import PWAInstallPrompt from './components/PWAInstallPrompt.jsx';
 import OfflineFallback from './components/OfflineFallback.jsx';
 import SplashScreen from './components/SplashScreen.jsx';
+import ForgotPassword from './page/Auth/ForgotPassword.jsx';
+import ResetPassword from './page/Auth/ResetPassword.jsx';
 
 function App() {
     return (
@@ -103,6 +105,8 @@ function App() {
                         <Route element={<AuthLayout/>}>
                             <Route element={<Login/>} path="/login"/>
                             <Route element={<SignUp/>} path="/signup"/>
+                            <Route path="/forgot-password" element={<ForgotPassword />} />
+                            <Route path="/reset-password/:token" element={<ResetPassword />} />
                         </Route>
                     </Route>
                 </Routes>

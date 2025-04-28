@@ -38,33 +38,32 @@ const SignUp = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-base-100 to-base-200 overflow-y-auto pb-12">
+        <div className="min-h-screen bg-gradient-to-br from-white to-gray-100 overflow-y-auto pb-12">
             <AuthHeader />
             
             {/* Main Content with padding top for fixed header */}
             <div className="pt-24 px-4">
                 <div className="max-w-5xl mx-auto">
-                    <div className="bg-base-100 rounded-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] overflow-hidden border border-gray-100 dark:border-gray-800">
+                    <div className="bg-white rounded-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] overflow-hidden border border-gray-100">
                         <div className="grid md:grid-cols-2 grid-cols-1">
                             {/* Form Section */}
-                            <div className="p-8 md:p-10 bg-base-100">
+                            <div className="p-8 md:p-10 bg-white">
                                 <div className="mb-10">
                                     <h2 className="text-3xl font-bold mb-2 text-center bg-gradient-to-r from-green-400 to-emerald-500 text-transparent bg-clip-text">
                                         Create Account
                                     </h2>
-                                    <p className="text-center text-gray-500 dark:text-gray-400">Join our educational platform today</p>
+                                    <p className="text-center text-gray-500">Join our educational platform today</p>
                                 </div>
 
                                 <form onSubmit={handleSignUp} className="space-y-6">
-                                    {/* ... existing code for form inputs ... */}
                                     <div className="transition-all duration-200 transform hover:translate-y-[-2px]">
-                                        <label className="block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300">Full Name</label>
+                                        <label className="block text-sm font-medium mb-1.5 text-gray-700">Full Name</label>
                                         <div className="relative group">
                                             <User className="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-gray-400 group-hover:text-green-500 transition-colors duration-200" size={18} />
                                             <input
                                                 type="text"
                                                 placeholder="Full Name"
-                                                className="w-full py-3.5 pl-11 bg-base-100 rounded-xl border border-gray-200 dark:border-gray-700 focus:border-green-500 focus:ring-4 focus:ring-green-500/20 px-4 text-base-text shadow-sm transition-all duration-200"
+                                                className="w-full py-3.5 pl-11 bg-white rounded-xl border border-gray-200 focus:border-green-500 focus:ring-4 focus:ring-green-500/20 px-4 text-gray-800 shadow-sm transition-all duration-200"
                                                 value={name}
                                                 onChange={(e) => setName(e.target.value)}
                                                 required
@@ -73,13 +72,13 @@ const SignUp = () => {
                                     </div>
                                     
                                     <div className="transition-all duration-200 transform hover:translate-y-[-2px]">
-                                        <label className="block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300">Email Address</label>
+                                        <label className="block text-sm font-medium mb-1.5 text-gray-700">Email Address</label>
                                         <div className="relative group">
                                             <Mail className="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-gray-400 group-hover:text-green-500 transition-colors duration-200" size={18} />
                                             <input
                                                 type="email"
                                                 placeholder="Email Address"
-                                                className="w-full py-3.5 pl-11 bg-base-100 rounded-xl border border-gray-200 dark:border-gray-700 focus:border-green-500 focus:ring-4 focus:ring-green-500/20 px-4 text-base-text shadow-sm transition-all duration-200"
+                                                className="w-full py-3.5 pl-11 bg-white rounded-xl border border-gray-200 focus:border-green-500 focus:ring-4 focus:ring-green-500/20 px-4 text-gray-800 shadow-sm transition-all duration-200"
                                                 value={email}
                                                 onChange={(e) => setEmail(e.target.value)}
                                                 required
@@ -88,13 +87,13 @@ const SignUp = () => {
                                     </div>
                                     
                                     <div className="transition-all duration-200 transform hover:translate-y-[-2px]">
-                                        <label className="block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300">Password</label>
+                                        <label className="block text-sm font-medium mb-1.5 text-gray-700">Password</label>
                                         <div className="relative group">
                                             <Lock className="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-gray-400 group-hover:text-green-500 transition-colors duration-200" size={18} />
                                             <input
                                                 type="password"
                                                 placeholder="Password"
-                                                className="w-full py-3.5 pl-11 bg-base-100 rounded-xl border border-gray-200 dark:border-gray-700 focus:border-green-500 focus:ring-4 focus:ring-green-500/20 px-4 text-base-text shadow-sm transition-all duration-200"
+                                                className="w-full py-3.5 pl-11 bg-white rounded-xl border border-gray-200 focus:border-green-500 focus:ring-4 focus:ring-green-500/20 px-4 text-gray-800 shadow-sm transition-all duration-200"
                                                 value={password}
                                                 onChange={(e) => setPassword(e.target.value)}
                                                 required
@@ -103,10 +102,10 @@ const SignUp = () => {
                                     </div>
                                     
                                     <div className="transition-all duration-200 transform hover:translate-y-[-2px]">
-                                        <label className="block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300">Select Role</label>
+                                        <label className="block text-sm font-medium mb-1.5 text-gray-700">Select Role</label>
                                         <div className="relative group">
                                             <select
-                                                className="w-full py-3.5 pl-4 bg-base-100 rounded-xl border border-gray-200 dark:border-gray-700 focus:border-green-500 focus:ring-4 focus:ring-green-500/20 px-4 text-base-text shadow-sm transition-all duration-200 appearance-none cursor-pointer"
+                                                className="w-full py-3.5 pl-4 bg-white rounded-xl border border-gray-200 focus:border-green-500 focus:ring-4 focus:ring-green-500/20 px-4 text-gray-800 shadow-sm transition-all duration-200 appearance-none cursor-pointer"
                                                 value={role}
                                                 onChange={(e) => setRole(e.target.value)}
                                                 required
