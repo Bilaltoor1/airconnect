@@ -7,7 +7,9 @@ import {
     updateProfileSetup,
     updateUser, changePassword, getAllTeachers, getStudentsWithoutBatch,
     getPendingTeachers,
-    verifyTeacher
+    verifyTeacher,
+    forgotPassword,
+    resetPassword
 } from "../controllers/user.controller.js";
 import {verifyToken} from "../middleware/verifyToken.js";
 import {checkCoordinator} from "../middleware/checkCoordinator.js";
@@ -57,4 +59,6 @@ router.get('/teachers', verifyToken, checkCoordinator, getAllTeachers);
 router.get('/students-without-batch', verifyToken, checkCoordinator, getStudentsWithoutBatch);
 router.get('/pending-teachers', verifyToken, checkCoordinator, getPendingTeachers);
 router.post('/verify-teacher', verifyToken, checkCoordinator, verifyTeacher);
+router.post('/forgot-password', forgotPassword);
+router.post('/reset-password/:token', resetPassword);
 export default router

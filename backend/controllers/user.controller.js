@@ -3,6 +3,9 @@ import UserModel from "../models/user.model.js";
 import { generateTokenAndSetCookie } from "../GenerateTokenAndSetCookie.js";
 import Batch from "../models/batch.model.js";
 import cloudinary from '../helpers/cloudinary.js';  // Make sure to import cloudinary
+import crypto from 'crypto'; // For generating reset tokens
+import nodemailer from 'nodemailer';
+import fs from 'fs'; // For file operations
 
 const uploadToCloudinaryWithRetry = async (filePath, options) => {
     let attempts = 3;
@@ -462,4 +465,156 @@ export const updateUserProfile = async (req, res) => {
     }
 };
 
-export { signup, login,getStudentsWithoutBatch,updateUser,changePassword, logout, getUser, updateProfileSetup };
+// Forgot password - send reset email
+export const forgotPassword = async (req, res) => {
+    try {
+        const { email } = req.body;
+        
+        const user = await UserModel.findOne({ email });
+        if (!user) {
+            return res.status(404).json({ message: 'User with that email does not exist' });
+        }
+        
+        // Generate random reset token
+        const resetToken = crypto.randomBytes(20).toString('hex');
+        console.log('Generated reset token:', resetToken); // Debug log
+        
+        // Hash token and set to resetPasswordToken field
+        user.resetPasswordToken = crypto
+            .createHash('sha256')
+            .update(resetToken)
+            .digest('hex');
+            
+        // Set expire time (1 hour instead of 10 minutes for better testing window)
+        user.resetPasswordExpire = Date.now() + 60 * 60 * 1000; // 1 hour expiration
+        
+        await user.save();
+        console.log('User after setting reset token:', {
+            id: user._id,
+            email: user.email,
+            tokenSet: !!user.resetPasswordToken,
+            expireTime: new Date(user.resetPasswordExpire).toISOString()
+        });
+        
+        // Create reset URL
+        const resetUrl = `${process.env.CLIENT_URL || 'http://localhost:5173'}/reset-password/${resetToken}`;
+        
+        // Create email message
+        const message = `
+            <h1>Password Reset Request</h1>
+            <p>You requested a password reset. Please click on the link below to reset your password:</p>
+            <a href="${resetUrl}" style="display: inline-block; padding: 10px 15px; background-color: #4ade80; color: white; text-decoration: none; border-radius: 5px; margin: 15px 0;">Reset Password</a>
+            <p>If you didn't request this, please ignore this email and your password will remain unchanged.</p>
+            <p>This link is valid for 1 hour.</p>
+        `;
+        
+        // Create nodemailer transporter
+        const transporter = nodemailer.createTransport({
+            service: process.env.EMAIL_SERVICE || 'gmail',
+            auth: {
+                user: process.env.EMAIL_USERNAME,
+                pass: process.env.EMAIL_PASSWORD
+            }
+        });
+        
+        // Send email
+        await transporter.sendMail({
+            from: `"AirConnect Support" <${process.env.EMAIL_FROM || process.env.EMAIL_USERNAME}>`,
+            to: email,
+            subject: 'AirConnect Password Reset',
+            html: message
+        });
+        
+        res.status(200).json({ message: 'Password reset email sent successfully' });
+    } catch (error) {
+        console.error('Forgot password error:', error);
+        res.status(500).json({ message: 'Could not send reset email. Please try again later.' });
+    }
+};
+
+// Reset password with token
+export const resetPassword = async (req, res) => {
+    try {
+        const { token } = req.params;
+        console.log('Received reset token:', token);
+        
+        if (!token) {
+            return res.status(400).json({ message: 'Reset token is required' });
+        }
+        
+        // Get hashed token
+        const resetPasswordToken = crypto
+            .createHash('sha256')
+            .update(token)
+            .digest('hex');
+            
+        console.log('Hashed token for lookup:', resetPasswordToken);
+        
+        // Find user with matching token and valid expire time
+        const user = await UserModel.findOne({
+            resetPasswordToken,
+            resetPasswordExpire: { $gt: Date.now() }
+        });
+        
+        console.log('User lookup result:', user ? {
+            found: true,
+            id: user._id,
+            email: user.email,
+            tokenMatch: user.resetPasswordToken === resetPasswordToken,
+            tokenExpired: user.resetPasswordExpire < Date.now(),
+            expiresAt: new Date(user.resetPasswordExpire).toISOString(),
+            currentTime: new Date().toISOString()
+        } : { found: false });
+        
+        if (!user) {
+            return res.status(400).json({ message: 'Invalid or expired reset token' });
+        }
+        
+        // Set new password
+        const { password } = req.body;
+        if (!password) {
+            return res.status(400).json({ message: 'Password is required' });
+        }
+        
+        const hashedPassword = await bcrypt.hash(password, 12);
+        
+        user.password = hashedPassword;
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpire = undefined;
+        
+        await user.save();
+        console.log('Password reset successful for user:', user.email);
+        
+        // Send confirmation email
+        const transporter = nodemailer.createTransport({
+            service: process.env.EMAIL_SERVICE || 'gmail',
+            auth: {
+                user: process.env.EMAIL_USERNAME,
+                pass: process.env.EMAIL_PASSWORD
+            }
+        });
+        
+        const message = `
+            <h1>Password Reset Successful</h1>
+            <p>Your password has been reset successfully.</p>
+            <p>If you did not perform this action, please contact our support team immediately.</p>
+        `;
+        
+        await transporter.sendMail({
+            from: `"AirConnect Support" <${process.env.EMAIL_FROM || process.env.EMAIL_USERNAME}>`,
+            to: user.email,
+            subject: 'Password Reset Successful',
+            html: message
+        });
+        
+        res.status(200).json({ message: 'Password reset successful' });
+    } catch (error) {
+        console.error('Reset password error:', error);
+        res.status(500).json({ 
+            message: 'Could not reset password. Please try again later.',
+            error: error.message
+        });
+    }
+};
+
+export { signup, login, getStudentsWithoutBatch, updateUser, changePassword, logout, getUser, updateProfileSetup };

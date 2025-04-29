@@ -89,7 +89,9 @@ export const useForgotPassword = () => {
 };
 
 export const useResetPassword = () => {
-    return useMutation(authApi.resetPassword);
+    return useMutation(
+        ({ token, password }) => authApi.resetPassword(token, password)
+    );
 };
 
 export const useProfileSetup = () => {

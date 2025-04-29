@@ -46,7 +46,7 @@ export const forgotPassword = async (email) => {
 
 export const resetPassword = async (token, password) => {
     const response = await pwaApiClient.post(`${AUTH_ENDPOINT}/reset-password/${token}`, { password });
-    return response.data.message;
+    return response.data;
 };
 
 export const profileSetup = async ({ userId, profileData }) => {
