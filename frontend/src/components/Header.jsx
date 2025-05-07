@@ -1,14 +1,14 @@
 import {Popover, PopoverButton, PopoverPanel} from '@headlessui/react';
 import ThemeToggle from "./ThemeToggle.jsx";
-import NotificationBell from './NotificationBell'; // Add this import
+import NotificationBell from './NotificationBell';
 import {Link, useNavigate} from "react-router-dom";
 import {useLogout} from "../hooks/useAuth.js";
 import {useState, useEffect, useRef} from "react";
 import { User } from 'lucide-react';
-import { useAuth } from "../context/AuthContext.jsx"; // Add this import
+import { useAuth } from "../context/AuthContext.jsx";
 
 function Header() {
-    const { user } = useAuth(); // Add this line to get the user from AuthContext
+    const { user } = useAuth();
     const {mutate: logout} = useLogout();
     const navigate = useNavigate();
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -58,27 +58,26 @@ function Header() {
                 </PopoverButton>
                 <PopoverPanel className="absolute z-10 right-0 mt-2 w-52 bg-base-100 rounded-box shadow-lg">
                     <ul className="menu p-2">
-                        <li>
-                            <button onClick={handleLogout}>
-                                Logout
-                            </button>
+                        {/* <li>
+                            <Link to="/view-user">
+                                View Profile
+                            </Link>
                         </li>
                         <li>
-                            <Link to='/update-user'>
+                            <Link to="/update-user">
                                 Edit Profile
                             </Link>
                         </li>
                         <li>
-                            <Link to='/change-password'>
+                            <Link to="/change-password">
                                 Change Password
                             </Link>
+                        </li> */}
+                        <li className="mt-2 pt-2 border-t">
+                            <button onClick={handleLogout}>
+                                Logout
+                            </button>
                         </li>
-                        <li>
-                          <Link to='/view-user'>
-                                View Profile
-                          </Link>
-                        </li>
-
                     </ul>
                 </PopoverPanel>
             </Popover>

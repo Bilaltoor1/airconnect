@@ -4,7 +4,6 @@ import cloudinary from '../helpers/cloudinary.js';
 import Comment from '../models/comment.model.js';
 import UserModel from "../models/user.model.js";
 import { createAnnouncementNotification } from './notification.controller.js';
-import { sendBulkNotifications } from '../services/socket.service.js';
 import { uploadMultipleToCloudinaryWithRetry } from '../helpers/cloudinaryUpload.js';
 import fs from 'fs';
 

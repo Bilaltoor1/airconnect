@@ -74,6 +74,7 @@ const getAnnouncementFilters = async (req, res) => {
         console.error(error);
     }
 };
+
 // Delete a section by ID
 const deleteAnnouncementFilter = async (req, res) => {
     try {
@@ -88,6 +89,7 @@ const deleteAnnouncementFilter = async (req, res) => {
         console.error(error);
     }
 };
+
 const getAllAnnouncementFilters = async (req, res) => {
     try {
         const sections = await AnnouncementFilter.find();

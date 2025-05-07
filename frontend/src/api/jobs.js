@@ -31,6 +31,11 @@ export const fetchJobs = async (params) => {
     return response.data;
 };
 
+export const fetchJobById = async (id) => {
+    const response = await axios.get(`${API_URL}/${id}`);
+    return response.data.job;
+};
+
 export const deleteJob = async (id) => {
     const response = await axios.delete(`${API_URL}/${id}`);
     return response.data;

@@ -24,7 +24,8 @@ import {
     ChevronDown,
     ChevronRight,
     Layers,
-    Grid
+    Grid,
+    Lock
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from "@/context/AuthContext.jsx";
@@ -59,25 +60,29 @@ const Sidebar = () => {
     };
 
     const getLinkItems = (role) => {
+        let roleSpecificLinks = [];
+        
         switch (role) {
             case 'student':
-                return [
+                roleSpecificLinks = [
                     { icon: Bell, text: 'Notification', link: '/' },
                     { icon: Briefcase, text: 'Jobs & interns', link: '/job-listings' },
-                    { icon: MessageSquare, text: 'Complaints', link: '/complaints' },
+                    // { icon: MessageSquare, text: 'Complaints', link: '/complaints' },
                     { icon: FileSpreadsheet, text: 'Application', link: '/application' },
                     { icon: History, text: 'Application history', link: '/student-applications-history' },
                 ];
+                break;
             case 'teacher':
-                return [
+                roleSpecificLinks = [
                     { icon: Bell, text: 'Notification', link: '/' },
                     { icon: Briefcase, text: 'Jobs & interns', link: '/job-listings' },
                     { icon: BadgePlus, text: 'Announcement', link: '/create-announcement' },
                     { icon: FileSpreadsheet, text: 'Application', link: '/teacher-applications' },
                     { icon: History, text: 'Application history', link: '/teacher-applications-history' },
                 ];
+                break;
             case 'coordinator':
-                return [
+                roleSpecificLinks = [
                     { icon: Bell, text: 'Notification', link: '/' },
                     { icon: Briefcase, text: 'Jobs & interns', link: '/job-listings' },
                     { icon: BadgePlus, text: 'Announcement', link: '/create-announcement' },
@@ -98,15 +103,31 @@ const Sidebar = () => {
                     { icon: UserPlus, text: 'Add Advisor', link: '/add-advisor' },
                     { icon: History, text: 'Application History', link: '/coordinator-applications-history' },
                 ];
+                break;
             case 'student-affairs':
-                return [
+                roleSpecificLinks = [
                     { icon: Bell, text: 'Notification', link: '/' },
                     { icon: Briefcase, text: 'Jobs & interns', link: '/job-listings' },
                     { icon: SquarePen, text: 'Create Jobs', link: '/create-jobs' }
                 ];
+                break;
             default:
-                return [];
+                roleSpecificLinks = [];
         }
+        
+        // Add Profile section with children for all users
+        roleSpecificLinks.push({
+            icon: User, 
+            text: 'View Profile', 
+            link: '/view-user',
+            hasChildren: true,
+            children: [
+                { icon: User, text: 'Edit Profile', link: '/update-user' },
+                { icon: Lock, text: 'Change Password', link: '/change-password' },
+            ]
+        });
+        
+        return roleSpecificLinks;
     };
 
     const linkItems = getLinkItems(user?.role);

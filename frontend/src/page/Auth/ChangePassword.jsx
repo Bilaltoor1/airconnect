@@ -122,14 +122,6 @@ const ChangePassword = () => {
                                         </div> : 
                                         "Change Password"}
                                 </button>
-                                
-                                <Link 
-                                    to='/' 
-                                    className="flex items-center justify-center w-full py-3.5 px-4 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium rounded-xl text-center hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-200 border border-transparent hover:border-gray-200 dark:hover:border-gray-700"
-                                >
-                                    <ChevronLeft size={16} className="mr-1" />
-                                    Back to Dashboard
-                                </Link>
                             </div>
                         </form>
                     </div>

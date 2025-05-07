@@ -18,6 +18,11 @@ export const useJobs = (params) => {
         cacheTime: 10000,
     });
 };
+export const useJobById = (id) => {
+    return useQuery(['job', id], () => jobsApi.fetchJobById(id), {
+        enabled: !!id,
+    });
+};
 
 export const useDeleteJob = () => {
     const queryClient = useQueryClient();

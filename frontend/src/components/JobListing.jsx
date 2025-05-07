@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { Briefcase, Building, Link as LinkIcon, Edit2, Trash2, X, Save, Calendar, MapPin, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ImagePreviewModal from './ImagePreviewModal';
+import JobDetailModal from './JobDetailModal';
 
 const JobList = ({ data = [], isLoading }) => {
     const { user } = useAuth();
@@ -22,7 +23,12 @@ const JobList = ({ data = [], isLoading }) => {
     const [selectedImage, setSelectedImage] = useState(null);
     const [previewOpen, setPreviewOpen] = useState(false);
     
-    const openImagePreview = (imageUrl) => {
+    // Job detail modal state
+    const [selectedJob, setSelectedJob] = useState(null);
+    const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+    
+    const openImagePreview = (imageUrl, e) => {
+        e.stopPropagation(); // Prevent job card click
         setSelectedImage(imageUrl);
         setPreviewOpen(true);
     };
@@ -30,6 +36,16 @@ const JobList = ({ data = [], isLoading }) => {
     const closeImagePreview = () => {
         setPreviewOpen(false);
         setTimeout(() => setSelectedImage(null), 300);
+    };
+    
+    const handleJobClick = (job) => {
+        setSelectedJob(job);
+        setIsDetailModalOpen(true);
+    };
+    
+    const closeDetailModal = () => {
+        setIsDetailModalOpen(false);
+        setTimeout(() => setSelectedJob(null), 200);
     };
 
     const handleDelete = (id) => {
@@ -120,10 +136,11 @@ const JobList = ({ data = [], isLoading }) => {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95 }}
                         transition={{ duration: 0.2 }}
-                        className="bg-base-100 border border-base-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-200"
+                        className="bg-base-100 border border-base-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
+                        onClick={() => handleJobClick(job)}
                     >
                         {editingJob === job._id ? (
-                            <div className="p-6">
+                            <div className="p-6" onClick={e => e.stopPropagation()}>
                                 <h3 className="text-lg font-semibold mb-4">Edit Job Listing</h3>
                                 <div className="grid gap-4">
                                     <div>
@@ -218,10 +235,10 @@ const JobList = ({ data = [], isLoading }) => {
                             <div>
                                 <div className="p-6">
                                     <div className="flex">
-                                        {/* Company logo/thumbnail */}
+                                        {/* Company logo/thumbnail - changed to circular */}
                                         <div 
-                                            className="w-16 h-16 rounded-lg overflow-hidden bg-base-200 flex-shrink-0 mr-4 border border-base-300 cursor-pointer hover:opacity-90 transition-opacity"
-                                            onClick={() => job.thumbnail && openImagePreview(job.thumbnail)}
+                                            className="w-16 h-16 rounded-full overflow-hidden bg-base-200 flex-shrink-0 mr-4 border border-base-300 cursor-pointer hover:opacity-90 transition-opacity"
+                                            onClick={(e) => job.thumbnail && openImagePreview(job.thumbnail, e)}
                                         >
                                             {job.thumbnail ? (
                                                 <img 
@@ -288,6 +305,7 @@ const JobList = ({ data = [], isLoading }) => {
                                         target="_blank" 
                                         rel="noopener noreferrer" 
                                         className="btn btn-primary btn-sm"
+                                        onClick={(e) => e.stopPropagation()} // Prevent modal from opening
                                     >
                                         <LinkIcon size={16} className="mr-1" /> Apply Now
                                     </a>
@@ -297,13 +315,19 @@ const JobList = ({ data = [], isLoading }) => {
                                         <div className="flex space-x-2">
                                             <button 
                                                 className="btn btn-outline btn-sm"
-                                                onClick={() => handleEdit(job)}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleEdit(job);
+                                                }}
                                             >
                                                 <Edit2 size={16} /> Edit
                                             </button>
                                             <button
                                                 className="btn btn-error btn-outline btn-sm"
-                                                onClick={() => handleDelete(job._id)}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleDelete(job._id);
+                                                }}
                                             >
                                                 <Trash2 size={16} /> Delete
                                             </button>
@@ -322,6 +346,13 @@ const JobList = ({ data = [], isLoading }) => {
                 onClose={closeImagePreview}
                 imageUrl={selectedImage}
                 altText="Job thumbnail"
+            />
+            
+            {/* Job Detail Modal */}
+            <JobDetailModal
+                job={selectedJob}
+                isOpen={isDetailModalOpen}
+                onClose={closeDetailModal}
             />
         </div>
     );

@@ -89,13 +89,13 @@ function App() {
                         </Route>
                     </Route>
                     <Route element={<ProtectedRoutes/>}>
-                        <Route element={<ChangePassword/>} path="/change-password"/>
                         <Route element={<BaseLayout/>}>
                             <Route element={<Home/>} path="/"/>
                             <Route element={<AnnoucmentDetail/>} path="/announcement/:id"/>
                             <Route element={<JobListings/>} path="/job-listings"/>
                             <Route element={<UpdateUser/>} path="/update-user"/>
                             <Route element={<ViewUser/>} path="/view-user"/>
+                            <Route element={<ChangePassword/>} path="/change-password"/>
                             <Route path="/applications/:id" element={<ApplicationDetail/>}/>
                             <Route path="/create-announcement" element={<CreatePost/>}/>
                         </Route>
