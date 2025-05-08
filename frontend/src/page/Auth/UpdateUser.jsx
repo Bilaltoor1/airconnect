@@ -10,6 +10,7 @@ import { Loader, User, Mail, Briefcase, UserCheck, ChevronLeft, Camera, Upload, 
 
 const teacherSchema = z.object({
     section: z.string().min(1, { message: "Section is required" }),
+    designation: z.string().min(1, { message: "Designation is required" }),
 });
 
 const studentSchema = z.object({
@@ -33,7 +34,8 @@ const UpdateUser = () => {
         email: user?.email || '',
         section: user?.section || '',
         rollNo: user?.rollNo || '',
-        batchId: user?.batchId || ''
+        batchId: user?.batchId || '',
+        designation: user?.designation || ''
     });
 
     const [profileImage, setProfileImage] = useState(null);
@@ -132,6 +134,7 @@ const UpdateUser = () => {
             formDataObj.append('batchId', formData.batchId);
         } else if (user.role === 'teacher') {
             formDataObj.append('section', formData.section);
+            formDataObj.append('designation', formData.designation);
         }
         
         let isValid = true;
@@ -150,9 +153,15 @@ const UpdateUser = () => {
                 validationErrors.batchId = { _errors: ["Batch is required"] };
                 isValid = false;
             }
-        } else if (user.role === 'teacher' && !formData.section) {
-            validationErrors.section = { _errors: ["Section is required"] };
-            isValid = false;
+        } else if (user.role === 'teacher') {
+            if (!formData.section) {
+                validationErrors.section = { _errors: ["Section is required"] };
+                isValid = false;
+            }
+            if (!formData.designation) {
+                validationErrors.designation = { _errors: ["Designation is required"] };
+                isValid = false;
+            }
         }
         
         if (!isValid) {
@@ -356,34 +365,61 @@ const UpdateUser = () => {
                             )}
                             
                             {user.role === 'teacher' && (
-                                <div className="transition-all duration-200 transform hover:translate-y-[-2px]">
-                                    <label className="block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300">Discipline</label>
-                                    <div className="relative group">
-                                        <Briefcase className="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-gray-400 group-hover:text-green-500 transition-colors duration-200" size={18} />
-                                        <select
-                                            name="section"
-                                            className="w-full py-3.5 pl-11 bg-base-100 rounded-xl border border-gray-200 dark:border-gray-700 focus:border-green-500 focus:ring-4 focus:ring-green-500/20 px-4 text-base-text shadow-sm transition-all duration-200 appearance-none cursor-pointer"
-                                            value={formData.section}
-                                            onChange={handleChange}
-                                        >
-                                            {sectionsLoading ? (
-                                                <option>Loading...</option>
-                                            ) : (
-                                                sectionsData.map((section) => (
-                                                    <option key={section._id} value={section.section}>
-                                                        {section.section}
-                                                    </option>
-                                                ))
-                                            )}
-                                        </select>
-                                        <div className="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                                            <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
-                                            </svg>
+                                <>
+                                    <div className="transition-all duration-200 transform hover:translate-y-[-2px]">
+                                        <label className="block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300">Discipline</label>
+                                        <div className="relative group">
+                                            <Briefcase className="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-gray-400 group-hover:text-green-500 transition-colors duration-200" size={18} />
+                                            <select
+                                                name="section"
+                                                className="w-full py-3.5 pl-11 bg-base-100 rounded-xl border border-gray-200 dark:border-gray-700 focus:border-green-500 focus:ring-4 focus:ring-green-500/20 px-4 text-base-text shadow-sm transition-all duration-200 appearance-none cursor-pointer"
+                                                value={formData.section}
+                                                onChange={handleChange}
+                                            >
+                                                {sectionsLoading ? (
+                                                    <option>Loading...</option>
+                                                ) : (
+                                                    sectionsData.map((section) => (
+                                                        <option key={section._id} value={section.section}>
+                                                            {section.section}
+                                                        </option>
+                                                    ))
+                                                )}
+                                            </select>
+                                            <div className="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                                                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                                                </svg>
+                                            </div>
                                         </div>
+                                        {errors.section && <p className="text-red-500 text-xs mt-1.5">{errors.section._errors[0]}</p>}
                                     </div>
-                                    {errors.section && <p className="text-red-500 text-xs mt-1.5">{errors.section._errors[0]}</p>}
-                                </div>
+                                    
+                                    <div className="transition-all duration-200 transform hover:translate-y-[-2px]">
+                                        <label className="block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300">Designation</label>
+                                        <div className="relative group">
+                                            <UserCheck className="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-gray-400 group-hover:text-green-500 transition-colors duration-200" size={18} />
+                                            <select
+                                                name="designation"
+                                                className="w-full py-3.5 pl-11 bg-base-100 rounded-xl border border-gray-200 dark:border-gray-700 focus:border-green-500 focus:ring-4 focus:ring-green-500/20 px-4 text-base-text shadow-sm transition-all duration-200 appearance-none cursor-pointer"
+                                                value={formData.designation}
+                                                onChange={handleChange}
+                                            >
+                                                <option value="">Select Designation</option>
+                                                <option value="Associate Professor">Associate Professor</option>
+                                                <option value="Assistant Professor">Assistant Professor</option>
+                                                <option value="Lecturer">Lecturer</option>
+                                                <option value="Demonstrator">Demonstrator</option>
+                                            </select>
+                                            <div className="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                                                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                                                </svg>
+                                            </div>
+                                        </div>
+                                        {errors.designation && <p className="text-red-500 text-xs mt-1.5">{errors.designation._errors[0]}</p>}
+                                    </div>
+                                </>
                             )}
                             
                             <div className="pt-6 space-y-4">

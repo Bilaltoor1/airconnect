@@ -10,6 +10,7 @@ import toast from 'react-hot-toast';
 
 const teacherSchema = z.object({
     section: z.string().min(1, { message: "Section is required" }),
+    designation: z.string().min(1, { message: "Designation is required" }),
 });
 
 const studentSchema = z.object({
@@ -33,6 +34,7 @@ const ProfileSetup = () => {
     const [filteredBatches, setFilteredBatches] = useState([]);
 
     const [section, setSection] = useState('');
+    const [designation, setDesignation] = useState('');
     const [rollNo, setRollNo] = useState('');
     const [batchId, setBatchId] = useState('');
     const [department, setDepartment] = useState('');
@@ -131,7 +133,7 @@ const ProfileSetup = () => {
             if (user.role === 'student') {
                 studentSchema.parse({ section, rollNo, batchId });
             } else if (user.role === 'teacher') {
-                teacherSchema.parse({ section });
+                teacherSchema.parse({ section, designation });
             } else if (user.role === 'coordinator') {
                 coordinatorSchema.parse({ department, officeNumber });
             }
@@ -165,6 +167,8 @@ const ProfileSetup = () => {
             formData.append('section', section);
         } else if (user.role === 'teacher') {
             formData.append('section', section);
+            formData.append('designation', designation);
+            console.log('Teacher designation selected:', designation); // Add this debug line
         } else if (user.role === 'coordinator') {
             formData.append('department', department);
             formData.append('officeNumber', officeNumber);
@@ -248,26 +252,43 @@ const ProfileSetup = () => {
 
                         <form onSubmit={handleSubmit} className="space-y-4">
                             {(user.role === 'teacher') && (
-                                <div>
-                                    <label className="block text-sm font-medium mb-1">Discipline</label>
-                                    <select
-                                        className="w-full py-3 bg-base-100 rounded-lg border border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-500 px-3 text-base-text"
-                                        value={section}
-                                        onChange={(e) => setSection(e.target.value)}
-                                    >
-                                        <option value="">Select Discipline</option>
-                                        {sectionsLoading ? (
-                                            <option>Loading...</option>
-                                        ) : (
-                                            sectionsData.map((section) => (
-                                                <option key={section._id} value={section.section}>
-                                                    {section.section}
-                                                </option>
-                                            ))
-                                        )}
-                                    </select>
-                                    {errors.section && <p className="text-red-500 text-xs mt-1">{errors.section._errors[0]}</p>}
-                                </div>
+                                <>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1">Discipline</label>
+                                        <select
+                                            className="w-full py-3 bg-base-100 rounded-lg border border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-500 px-3 text-base-text"
+                                            value={section}
+                                            onChange={(e) => setSection(e.target.value)}
+                                        >
+                                            <option value="">Select Discipline</option>
+                                            {sectionsLoading ? (
+                                                <option>Loading...</option>
+                                            ) : (
+                                                sectionsData.map((section) => (
+                                                    <option key={section._id} value={section.section}>
+                                                        {section.section}
+                                                    </option>
+                                                ))
+                                            )}
+                                        </select>
+                                        {errors.section && <p className="text-red-500 text-xs mt-1">{errors.section._errors[0]}</p>}
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1">Designation <span className="text-red-500">*</span></label>
+                                        <select
+                                            className="w-full py-3 bg-base-100 rounded-lg border border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-500 px-3 text-base-text"
+                                            value={designation}
+                                            onChange={(e) => setDesignation(e.target.value)}
+                                        >
+                                            <option value="">Select Designation</option>
+                                            <option value="Associate Professor">Associate Professor</option>
+                                            <option value="Assistant Professor">Assistant Professor</option>
+                                            <option value="Lecturer">Lecturer</option>
+                                            <option value="Demonstrator">Demonstrator</option>
+                                        </select>
+                                        {errors.designation && <p className="text-red-500 text-xs mt-1">{errors.designation._errors[0]}</p>}
+                                    </div>
+                                </>
                             )}
                             {user.role === 'student' && (
                                 <>

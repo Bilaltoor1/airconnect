@@ -5,6 +5,11 @@ const teacherSchema = new mongoose.Schema({
     section: {
         type: String,
     },
+    designation: {
+        type: String,
+        enum: ["Associate Professor", "Assistant Professor", "Lecturer", "Demonstrator"]
+        // Removed required: true to make it optional during signup
+    }
 });
 
 const Teacher = User.discriminator('teacher', teacherSchema);

@@ -14,6 +14,13 @@ export const getAnnouncements = async (req, res) => {
         console.log('Request query params:', req.query);
         console.log('User role:', req.user.role);
         console.log('Initial query:', JSON.stringify(query));
+        
+        // Add filter for announcements created after user registration
+        const user = await UserModel.findById(req.user._id);
+        if (user && user.createdAt) {
+            query.created = { $gte: user.createdAt };
+        }
+        
         if (req.user.role === 'coordinator') {
             // Coordinator can only see announcements they created
             query.user = req.user._id;

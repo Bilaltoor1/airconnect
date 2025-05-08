@@ -304,60 +304,7 @@ const ApplicationDetail = () => {
             }
         `,
     });
-    
-    // Improved PDF generation
-    const handleDownloadPDF = () => {
-        if (!printRef.current) {
-            toast.error("Content not ready for PDF generation");
-            return;
-        }
-        
-        const loadingToast = toast.loading("Generating PDF...");
-        
-        const element = printRef.current;
-        
-        const opt = {
-            margin: [15, 15, 15, 15], // Consistent margins: top, right, bottom, left (in mm)
-            filename: `Application_${application?._id || 'application'}.pdf`,
-            image: { type: 'jpeg', quality: 1.0 },
-            html2canvas: { 
-                scale: 2, 
-                useCORS: true,
-                letterRendering: true,
-                logging: false
-            },
-            jsPDF: { 
-                unit: 'mm', 
-                format: 'a4', 
-                orientation: 'portrait',
-                compress: true,
-                pdfQuality: 1.0
-            }
-        };
-        
-        // Process element to remove host-related info before PDF generation
-        const processedElement = element.cloneNode(true);
-        const links = processedElement.querySelectorAll('a[href^="http://localhost"], a[href^="https://localhost"]');
-        links.forEach(link => {
-            link.style.display = 'none';
-        });
-        
-        // Use html2pdf with promise handling
-        html2pdf()
-            .from(processedElement)
-            .set(opt)
-            .save()
-            .then(() => {
-                toast.dismiss(loadingToast);
-                toast.success("PDF downloaded successfully");
-            })
-            .catch(error => {
-                console.error("PDF generation error:", error);
-                toast.dismiss(loadingToast);
-                toast.error("Failed to download PDF. Please try again.");
-            });
-    };
-    
+
     const handleApproveByAdvisor = () => {
         updateApplicationByAdvisor.mutate({ 
             id: application._id, 
@@ -534,13 +481,6 @@ const ApplicationDetail = () => {
                         >
                             <Printer size={16} />
                             Print
-                        </button>
-                        <button 
-                            onClick={handleDownloadPDF}
-                            className="btn btn-sm text-white flex items-center gap-1 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-lime-400 hover:to-lime-500 transition-all duration-300"
-                        >
-                            <Download size={16} />
-                            Download PDF
                         </button>
                     </div>
                 )}

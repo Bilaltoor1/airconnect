@@ -32,7 +32,7 @@ const signup = async (req, res) => {
         }
 
         // Email validation patterns
-        const studentEmailPattern = /^\d+@student\.au\.edu\.pk$/;
+        const studentEmailPattern = /^\d+@students\.au\.edu\.pk$/;
         const teacherEmailPattern = /^[a-zA-Z0-9._%+-]+@aumc\.edu\.pk$/;
 
         // Validate email based on role
@@ -134,8 +134,12 @@ const getUser = async (req, res) => {
         if (req.user.role === 'student') {
             query = query.populate({
                 path: 'batch',
-                select: 'name',
-                match: { students: req.user._id } // Ensure user is in batch.students
+                select: 'name advisor teachers',
+                match: { students: req.user._id }, // Ensure user is in batch.students
+                populate: [
+                    { path: 'advisor', select: 'name email' },
+                    { path: 'teachers', select: 'name email section' }
+                ]
             });
         }
 
@@ -147,6 +151,8 @@ const getUser = async (req, res) => {
         const userWithBatch = user.toObject();
         if (user.batch) {
             userWithBatch.batchName = user.batch.name;
+            userWithBatch.advisor = user.batch.advisor;
+            userWithBatch.teachers = user.batch.teachers;
         }
         // console.log('user with batch',userWithBatch)
         res.status(200).json({ user: userWithBatch });
@@ -225,6 +231,8 @@ const updateProfileSetup = async (req, res) => {
             }
         } else if (user.role === 'teacher') {
             user.section = profileData.section;
+            user.designation = profileData.designation; // Add this line to save the designation
+            console.log('Setting teacher designation:', profileData.designation);
         } else if (user.role === 'coordinator') {
             user.department = profileData.department;
             user.officeNumber = profileData.officeNumber;

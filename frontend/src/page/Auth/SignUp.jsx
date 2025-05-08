@@ -16,8 +16,8 @@ const SignUp = () => {
 
     const roles = ["student", "teacher"];
 
-    // Email validation patterns
-    const studentEmailPattern = /^\d+@student\.au\.edu\.pk$/;
+    // Email validation patterns - FIXED to match backend patterns
+    const studentEmailPattern = /^\d+@students\.au\.edu\.pk$/;
     const teacherEmailPattern = /^[a-zA-Z0-9._%+-]+@aumc\.edu\.pk$/;
 
     const validateEmail = () => {
@@ -27,12 +27,12 @@ const SignUp = () => {
         }
 
         if (role === "student" && !studentEmailPattern.test(email)) {
-            setValidationError("Student email must follow the pattern: 213088@student.au.edu.pk");
+            setValidationError("Student email must follow the pattern: 213088@students.au.edu.pk");
             return false;
         }
 
         if (role === "teacher" && !teacherEmailPattern.test(email) && !studentEmailPattern.test(email)) {
-            setValidationError("Teacher email must follow either pattern: name@aumc.edu.pk or 213088@student.au.edu.pk");
+            setValidationError("Teacher email must follow either pattern: name@aumc.edu.pk or 213088@students.au.edu.pk");
             return false;
         }
 
@@ -66,19 +66,20 @@ const SignUp = () => {
         signup({ email, password, name, role }, {
             onSuccess: (response) => {
                 if (response.role === 'student') {
-                    navigate("/profile-setup");
-                } else if (response.role === 'student-affairs' || response.role === 'coordinator') {
+                    // Show success message without redirecting to profile-setup
+                    toast.success("Registration successful! Please check your email to set up your profile.");
+                    navigate("/login");
+                } else if (response.role === 'teacher') {
                     toast.success("Your account needs admin approval. Please log in once approved.");
                     navigate("/login");
                 } else {
-                    console.log(response.role)
                     toast.success("Your account needs admin approval. Please log in once approved.");
                     navigate("/login");
                 }
             },
             onError: (error) => {
                 console.log(error);
-                toast.error("Signup failed. Please try again.");
+                toast.error(error.response?.data?.message || "Signup failed. Please try again.");
             }
         });
     };
