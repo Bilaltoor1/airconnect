@@ -741,7 +741,7 @@ const ApplicationDetail = () => {
                                 onClick={handleRequestChangesByAdvisor}
                                 className="btn btn-warning hover:bg-gradient-to-r hover:from-green-500 hover:to-emerald-500 hover:text-white hover:border-transparent"
                             >
-                                Request Changes
+                                Require Changes
                             </button>
                         )}
                         <button 

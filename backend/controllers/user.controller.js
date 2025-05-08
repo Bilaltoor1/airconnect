@@ -31,6 +31,23 @@ const signup = async (req, res) => {
             });
         }
 
+        // Email validation patterns
+        const studentEmailPattern = /^\d+@student\.au\.edu\.pk$/;
+        const teacherEmailPattern = /^[a-zA-Z0-9._%+-]+@aumc\.edu\.pk$/;
+
+        // Validate email based on role
+        if (role === 'student' && !studentEmailPattern.test(email)) {
+            return res.status(400).json({ 
+                message: 'Invalid email format. Student email must follow pattern: 213088@student.au.edu.pk' 
+            });
+        }
+
+        if (role === 'teacher' && !teacherEmailPattern.test(email) && !studentEmailPattern.test(email)) {
+            return res.status(400).json({ 
+                message: 'Invalid email format. Teacher email must follow either pattern: name@aumc.edu.pk or 213088@student.au.edu.pk' 
+            });
+        }
+
         const existingUser = await UserModel.findOne({ email });
         if (existingUser) {
             return res.status(400).json({ message: 'User already exists' });

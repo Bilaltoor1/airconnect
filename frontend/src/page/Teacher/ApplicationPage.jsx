@@ -208,7 +208,7 @@ const TeacherApplicationPage = () => {
                                     onClick={() => handleRequestChanges(selectedApplication._id)}
                                     className="btn btn-warning"
                                 >
-                                    Request Changes
+                                    Require Changes
                                 </button>
                                 <button 
                                     onClick={() => handleApprove(selectedApplication._id)}

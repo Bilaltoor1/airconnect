@@ -10,13 +10,59 @@ const SignUp = () => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [role, setRole] = useState("");
+    const [validationError, setValidationError] = useState("");
     const { mutate: signup, isLoading, error } = useSignup();
     const navigate = useNavigate();
 
     const roles = ["student", "teacher"];
 
+    // Email validation patterns
+    const studentEmailPattern = /^\d+@student\.au\.edu\.pk$/;
+    const teacherEmailPattern = /^[a-zA-Z0-9._%+-]+@aumc\.edu\.pk$/;
+
+    const validateEmail = () => {
+        if (!role) {
+            setValidationError("Please select a role first");
+            return false;
+        }
+
+        if (role === "student" && !studentEmailPattern.test(email)) {
+            setValidationError("Student email must follow the pattern: 213088@student.au.edu.pk");
+            return false;
+        }
+
+        if (role === "teacher" && !teacherEmailPattern.test(email) && !studentEmailPattern.test(email)) {
+            setValidationError("Teacher email must follow either pattern: name@aumc.edu.pk or 213088@student.au.edu.pk");
+            return false;
+        }
+
+        setValidationError("");
+        return true;
+    };
+
+    const handleRoleChange = (e) => {
+        setRole(e.target.value);
+        if (email) {
+            // Clear validation error when role changes
+            setValidationError("");
+        }
+    };
+
+    const handleEmailChange = (e) => {
+        setEmail(e.target.value);
+        if (validationError && role) {
+            // Re-validate when email changes if there was an error
+            validateEmail();
+        }
+    };
+
     const handleSignUp = async (e) => {
         e.preventDefault();
+        
+        if (!validateEmail()) {
+            return;
+        }
+        
         signup({ email, password, name, role }, {
             onSuccess: (response) => {
                 if (response.role === 'student') {
@@ -72,18 +118,50 @@ const SignUp = () => {
                                     </div>
                                     
                                     <div className="transition-all duration-200 transform hover:translate-y-[-2px]">
+                                        <label className="block text-sm font-medium mb-1.5 text-gray-700">Select Role</label>
+                                        <div className="relative group">
+                                            <select
+                                                className="w-full py-3.5 pl-4 bg-white rounded-xl border border-gray-200 focus:border-green-500 focus:ring-4 focus:ring-green-500/20 px-4 text-gray-800 shadow-sm transition-all duration-200 appearance-none cursor-pointer"
+                                                value={role}
+                                                onChange={handleRoleChange}
+                                                required
+                                            >
+                                                <option value="" disabled>Select a Role</option>
+                                                {roles.map((role, index) => (
+                                                    <option key={index} value={role}>{role}</option>
+                                                ))}
+                                            </select>
+                                            <div className="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                                                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                                                </svg>
+                                            </div>
+                                        </div>
+                                        {role && (
+                                            <p className="text-xs text-gray-500 mt-1">
+                                                {role === "student" 
+                                                    ? "Use email format: 213088@student.au.edu.pk" 
+                                                    : "Use email format: name@aumc.edu.pk or 213088@student.au.edu.pk"}
+                                            </p>
+                                        )}
+                                    </div>
+                                    
+                                    <div className="transition-all duration-200 transform hover:translate-y-[-2px]">
                                         <label className="block text-sm font-medium mb-1.5 text-gray-700">Email Address</label>
                                         <div className="relative group">
                                             <Mail className="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-gray-400 group-hover:text-green-500 transition-colors duration-200" size={18} />
                                             <input
                                                 type="email"
                                                 placeholder="Email Address"
-                                                className="w-full py-3.5 pl-11 bg-white rounded-xl border border-gray-200 focus:border-green-500 focus:ring-4 focus:ring-green-500/20 px-4 text-gray-800 shadow-sm transition-all duration-200"
+                                                className={`w-full py-3.5 pl-11 bg-white rounded-xl border ${validationError ? 'border-red-500' : 'border-gray-200'} focus:border-green-500 focus:ring-4 focus:ring-green-500/20 px-4 text-gray-800 shadow-sm transition-all duration-200`}
                                                 value={email}
-                                                onChange={(e) => setEmail(e.target.value)}
+                                                onChange={handleEmailChange}
                                                 required
                                             />
                                         </div>
+                                        {validationError && (
+                                            <p className="text-red-500 text-sm mt-1">{validationError}</p>
+                                        )}
                                     </div>
                                     
                                     <div className="transition-all duration-200 transform hover:translate-y-[-2px]">
@@ -98,28 +176,6 @@ const SignUp = () => {
                                                 onChange={(e) => setPassword(e.target.value)}
                                                 required
                                             />
-                                        </div>
-                                    </div>
-                                    
-                                    <div className="transition-all duration-200 transform hover:translate-y-[-2px]">
-                                        <label className="block text-sm font-medium mb-1.5 text-gray-700">Select Role</label>
-                                        <div className="relative group">
-                                            <select
-                                                className="w-full py-3.5 pl-4 bg-white rounded-xl border border-gray-200 focus:border-green-500 focus:ring-4 focus:ring-green-500/20 px-4 text-gray-800 shadow-sm transition-all duration-200 appearance-none cursor-pointer"
-                                                value={role}
-                                                onChange={(e) => setRole(e.target.value)}
-                                                required
-                                            >
-                                                <option value="" disabled>Select a Role</option>
-                                                {roles.map((role, index) => (
-                                                    <option key={index} value={role}>{role}</option>
-                                                ))}
-                                            </select>
-                                            <div className="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                                                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
-                                                </svg>
-                                            </div>
                                         </div>
                                     </div>
                                     
