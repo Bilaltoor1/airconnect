@@ -66,9 +66,8 @@ const SignUp = () => {
         signup({ email, password, name, role }, {
             onSuccess: (response) => {
                 if (response.role === 'student') {
-                    // Show success message without redirecting to profile-setup
-                    toast.success("Registration successful! Please check your email to set up your profile.");
-                    navigate("/login");
+                    // Redirect students to profile-setup instead of login
+                    navigate("/profile-setup");
                 } else if (response.role === 'teacher') {
                     toast.success("Your account needs admin approval. Please log in once approved.");
                     navigate("/login");

@@ -78,10 +78,11 @@ const ProfileSetup = () => {
     }, [section]);
 
     const handleLogout = () => {
+        // Navigate to login page immediately for better user experience
+        navigate('/login');
+        
+        // Perform logout operation in the background
         logout({
-            onSuccess: () => {
-                navigate('/login');
-            },
             onError: (error) => {
                 console.error('Logout failed', error);
             }

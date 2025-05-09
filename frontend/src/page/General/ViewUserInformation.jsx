@@ -38,16 +38,6 @@ const ViewUser = () => {
         }
     };
 
-    const refreshUserData = async () => {
-        if (!user) return;
-
-        setIsRefreshing(true);
-        try {
-            await fetchCompleteUserData();
-        } finally {
-            setIsRefreshing(false);
-        }
-    };
 
     if (!user) {
         return (

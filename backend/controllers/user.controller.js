@@ -127,6 +127,7 @@ export const getAllTeachers = async (req, res) => {
         res.status(500).json({ message: 'Something went wrong, please try again later' });
     }
 };
+
 const getUser = async (req, res) => {
     try {
         let query = UserModel.findOne({ _id: req.user._id });
@@ -135,7 +136,6 @@ const getUser = async (req, res) => {
             query = query.populate({
                 path: 'batch',
                 select: 'name advisor teachers',
-                match: { students: req.user._id }, // Ensure user is in batch.students
                 populate: [
                     { path: 'advisor', select: 'name email' },
                     { path: 'teachers', select: 'name email section' }
@@ -148,15 +148,21 @@ const getUser = async (req, res) => {
         if (!user) {
             return res.status(404).json({ message: "User Not Found" });
         }
+        
         const userWithBatch = user.toObject();
+        
         if (user.batch) {
+            console.log('Batch data found:', user.batch); // Debug log
             userWithBatch.batchName = user.batch.name;
             userWithBatch.advisor = user.batch.advisor;
             userWithBatch.teachers = user.batch.teachers;
+        } else {
+            console.log('No batch data found for user:', user._id);
         }
-        // console.log('user with batch',userWithBatch)
+        
         res.status(200).json({ user: userWithBatch });
     } catch (e) {
+        console.error('Error fetching user data:', e);
         res.status(500).json({ message: "Something went wrong, please try again later" });
     }
 };
