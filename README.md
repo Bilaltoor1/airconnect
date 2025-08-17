@@ -1,6 +1,6 @@
 # AirConnect (FYP)
 A role-based campus communication and workflow platform for Students, Teachers, Coordinators, and Student Affairs. It centralizes announcements, applications/approvals, batch/section management, job postings, user profiles, and real-time notifications. The frontend ships as a PWA for fast, offline-friendly access.
-
+![s1](frontend/public/screenshots/image-1.png)
 ## Tech stack
 - Backend: Node.js, Express, MongoDB (Mongoose), JWT, Socket.IO, Multer, Cloudinary, Nodemailer, Web Push
 - Frontend: React 18, Vite, React Router, React Query, Axios, Tailwind CSS + DaisyUI, Zustand, Zod, Socket.IO client, PWA (vite-plugin-pwa + Workbox)
@@ -93,7 +93,7 @@ Below are images taken from the frontend public folder. These are referenced wit
 ### Screenshots
 
 <!-- 25 screenshots from frontend/public/screenshots/ -->
-![s1](frontend/public/screenshots/image-1.png)
+
 ![s2](frontend/public/screenshots/image-2.png)
 ![s3](frontend/public/screenshots/image-3.png)
 ![s4](frontend/public/screenshots/image-4.png)
